@@ -40,6 +40,9 @@ def save_last_name(message, first_name):
 
 
 def give_id(message, first_name, last_name):
+    """
+    The function returns the user id depending on the first name and last name
+    """
     try:
         connection = psy.connect(user=db['user'],
                                  password=db['password'],
@@ -52,6 +55,7 @@ def give_id(message, first_name, last_name):
 
         cursor.execute("SELECT id FROM plat_people_main WHERE first_name = %s AND middle_name = %s",
                        (first_name, last_name))
+
         bot.send_message(message.chat.id, f'Вот твой id: {cursor.fetchall()[0][0]}')
     except Error as error:
         print('Ошибка при работе с PostgreSQL', error)
