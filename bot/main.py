@@ -15,7 +15,6 @@ def hello_message(message):
     bot.register_next_step_handler(pin_code, try_pin)
 
 
-@bot.message_handler(content_types=['text'])
 def try_pin(message):
     if message.text.lower() == pin:
         bot.send_message(message.chat.id, 'Введен правильный пароль. Доступ открыт!')
@@ -25,6 +24,16 @@ def try_pin(message):
         bot.send_message(message.chat.id, 'Неверный пароль, попробуйте еще раз!')
 
 
+@bot.message_handler(commands=['help'])
+def help_command(message):
+    bot.send_message(message.chat.id, f'Привет, {message.chat.first_name}\nЭта команда поможет вам разобраться!')
+    bot.send_message(message.chat.id,
+                     f'В нашем боте существуют такие команды:\n'
+                     f'/start — полностью начинает работу бота заново\n'
+                     f'/help — выводит команды, которые существуют в боте')
+
+
+@bot.message_handler(content_types=['text'])
 def save_first_name(message):
     first_name = message.text
     last_name = bot.send_message(message.chat.id, 'Напиши свою фамилию')
@@ -45,11 +54,12 @@ def give_id(message, first_name, last_name):
                                  database=db['database'])
         cursor = connection.cursor()
 
-        cursor.execute("SELECT id FROM plat_people_main WHERE first_name = %s AND middle_name = %s",
+        cursor.execute("SELECT id "
+                       "FROM plat_people_main "
+                       "WHERE similarity(first_name, %s) > 0.3 AND similarity(middle_name, %s) > 0.3",
                        (first_name, last_name))
 
         person_id = cursor.fetchone()[0]
-        # bot.send_message(message.chat.id, f'Вот твой id: {person_id}')
 
         cursor.execute("SELECT name, time_from, time_to "
                        "FROM plat_people_main as ppm "
@@ -61,6 +71,9 @@ def give_id(message, first_name, last_name):
         bot.send_message(message.chat.id, f'Название: {schedule[0][0]}\n'
                                           f'Время начала: {schedule[0][1]}\n'
                                           f'Время конца: {schedule[0][2]}')
+
+        bot.send_message(message.chat.id,
+                         f'{message.chat.first_name}, если вас интересует еще что-то, то можете ввести команду /help')
     except Error as error:
         print('Ошибка при работе с PostgreSQL', error)
     except IndexError:
