@@ -1,7 +1,6 @@
 from config import token
 from config import database as db
 from config import pin
-from config import logged_users
 import telebot
 import psycopg2 as psy
 from psycopg2 import Error
@@ -19,12 +18,10 @@ def hello_message(message):
 @bot.message_handler(content_types=['text'])
 def try_pin(message):
     if message.text.lower() == pin:
-        logged_users[message.chat.id] = 'yes'
         bot.send_message(message.chat.id, 'Введен правильный пароль. Доступ открыт!')
         first_name = bot.send_message(message.chat.id, 'Напиши свое имя')
         bot.register_next_step_handler(first_name, save_first_name)
     else:
-        logged_users[message.chat.id] = 'no'
         bot.send_message(message.chat.id, 'Неверный пароль, попробуйте еще раз!')
 
 
@@ -47,14 +44,27 @@ def give_id(message, first_name, last_name):
                                  port=db['port'],
                                  database=db['database'])
         cursor = connection.cursor()
-        cursor.execute("SELECT version();")
-        print("Вы подключены к -", cursor.fetchone(), "\n")
 
         cursor.execute("SELECT id FROM plat_people_main WHERE first_name = %s AND middle_name = %s",
                        (first_name, last_name))
-        bot.send_message(message.chat.id, f'Вот твой id: {cursor.fetchall()[0][0]}')
+
+        person_id = cursor.fetchone()[0]
+        # bot.send_message(message.chat.id, f'Вот твой id: {person_id}')
+
+        cursor.execute("SELECT name, time_from, time_to "
+                       "FROM plat_people_main as ppm "
+                       "JOIN plat_timetable_main as ptm ON ppm.id = ptm.org_id "
+                       "JOIN plat_timetable_cases as ptc ON ptm.event_id = ptc.id "
+                       "WHERE org_id = %s", (person_id, ))
+
+        schedule = cursor.fetchall()
+        bot.send_message(message.chat.id, f'Название: {schedule[0][0]}\n'
+                                          f'Время начала: {schedule[0][1]}\n'
+                                          f'Время конца: {schedule[0][2]}')
     except Error as error:
         print('Ошибка при работе с PostgreSQL', error)
+    except IndexError:
+        bot.send_message(message.chat.id, 'Такого пользователя нет, попробуйте еще раз!')
     finally:
         if connection:
             connection.close()
