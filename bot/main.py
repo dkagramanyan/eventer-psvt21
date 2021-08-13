@@ -1,9 +1,7 @@
-from config import token
-from config import database as db
-from config import pin
+from config import token, pin, database as db
 import telebot
 import psycopg2 as psy
-from psycopg2 import Error
+from psycopg2 import OperationalError
 
 bot = telebot.TeleBot(token)
 
@@ -24,9 +22,20 @@ def try_pin(message):
         bot.send_message(message.chat.id, 'Неверный пароль, попробуйте еще раз!')
 
 
+def connect_to_database():
+    try:
+        connection = psy.connect(user=db['user'],
+                                 password=db['password'],
+                                 host=db['host'],
+                                 port=db['port'],
+                                 database=db['database'])
+        return connection
+    except OperationalError as error:
+        print('Ошибка при работе с PostgreSQL', error)
+
+
 @bot.message_handler(commands=['help'])
 def help_command(message):
-    bot.send_message(message.chat.id, f'Привет, {message.chat.first_name}\nЭта команда поможет вам разобраться!')
     bot.send_message(message.chat.id,
                      f'В нашем боте существуют такие команды:\n'
                      f'/start — полностью начинает работу бота заново\n'
@@ -42,46 +51,32 @@ def save_first_name(message):
 
 def save_last_name(message, first_name):
     last_name = message.text
-    give_id(message, first_name, last_name)
+    connection = connect_to_database()
+    give_id(message, first_name, last_name, connection)
 
 
-def give_id(message, first_name, last_name):
-    try:
-        connection = psy.connect(user=db['user'],
-                                 password=db['password'],
-                                 host=db['host'],
-                                 port=db['port'],
-                                 database=db['database'])
-        cursor = connection.cursor()
+def give_id(message, first_name, last_name, connection):
+    cursor = connection.cursor()
 
-        cursor.execute("SELECT id "
-                       "FROM plat_people_main "
-                       "WHERE similarity(first_name, %s) > 0.3 AND similarity(middle_name, %s) > 0.3",
-                       (first_name, last_name))
+    cursor.execute("SELECT id "
+                   "FROM plat_people_main "
+                   "WHERE similarity(first_name, %s) > 0.5 AND similarity(middle_name, %s) > 0.5",
+                   (first_name, last_name))
+    person_id = cursor.fetchone()[0]
 
-        person_id = cursor.fetchone()[0]
+    cursor.execute("SELECT name, time_from, time_to "
+                   "FROM plat_people_main as ppm "
+                   "JOIN plat_timetable_main as ptm ON ppm.id = ptm.org_id "
+                   "JOIN plat_timetable_cases as ptc ON ptm.event_id = ptc.id "
+                   "WHERE org_id = %s", (person_id, ))
+    schedule = cursor.fetchall()
 
-        cursor.execute("SELECT name, time_from, time_to "
-                       "FROM plat_people_main as ppm "
-                       "JOIN plat_timetable_main as ptm ON ppm.id = ptm.org_id "
-                       "JOIN plat_timetable_cases as ptc ON ptm.event_id = ptc.id "
-                       "WHERE org_id = %s", (person_id, ))
+    bot.send_message(message.chat.id, f'Название: {schedule[0][0]}\n'
+                                      f'Время начала: {schedule[0][1]}\n'
+                                      f'Время конца: {schedule[0][2]}')
 
-        schedule = cursor.fetchall()
-        bot.send_message(message.chat.id, f'Название: {schedule[0][0]}\n'
-                                          f'Время начала: {schedule[0][1]}\n'
-                                          f'Время конца: {schedule[0][2]}')
-
-        bot.send_message(message.chat.id,
-                         f'{message.chat.first_name}, если вас интересует еще что-то, то можете ввести команду /help')
-    except Error as error:
-        print('Ошибка при работе с PostgreSQL', error)
-    except IndexError:
-        bot.send_message(message.chat.id, 'Такого пользователя нет, попробуйте еще раз!')
-    finally:
-        if connection:
-            connection.close()
-            cursor.close()
+    bot.send_message(message.chat.id,
+                     f'{message.chat.first_name}, если вас интересует еще что-то, то можете ввести команду /help')
 
 
 bot.polling()
