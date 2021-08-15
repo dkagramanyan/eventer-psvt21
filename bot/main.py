@@ -11,10 +11,10 @@ logged_users = {}
 def connect_to_database():
     try:
         conn = psy.connect(user=db['user'],
-                                 password=db['password'],
-                                 host=db['host'],
-                                 port=db['port'],
-                                 database=db['database'])
+                           password=db['password'],
+                           host=db['host'],
+                           port=db['port'],
+                           database=db['database'])
         return conn
     except OperationalError as error:
         print('Ошибка при работе с PostgreSQL', error)
