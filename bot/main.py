@@ -10,14 +10,17 @@ logged_users = {}
 
 def connect_to_database():
     try:
-        connection = psy.connect(user=db['user'],
+        conn = psy.connect(user=db['user'],
                                  password=db['password'],
                                  host=db['host'],
                                  port=db['port'],
                                  database=db['database'])
-        return connection
+        return conn
     except OperationalError as error:
         print('Ошибка при работе с PostgreSQL', error)
+
+
+connection = connect_to_database()
 
 
 def name(message):
@@ -40,7 +43,7 @@ def save_last_name(message, first_name):
 
 
 def give_schedule_by_name_and_surname(message, first_name, last_name):
-    connection = connect_to_database()
+    global connection
     cursor = connection.cursor()
 
     cursor.execute("SELECT id "
@@ -62,7 +65,7 @@ def give_schedule_by_name_and_surname(message, first_name, last_name):
 
 
 def give_schedule_by_surname(message, last_name):
-    connection = connect_to_database()
+    global connection
     cursor = connection.cursor()
 
     cursor.execute("SELECT id "
