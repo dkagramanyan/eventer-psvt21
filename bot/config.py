@@ -5,8 +5,7 @@ database = {
     'password': '17TED_found71',
     'host': 'localhost',
     'port': '5432',
-    'database': 'postgres'
+    'database': 'p21'
 }
 
 pin = 'qwerty'
-logged_users = {}
