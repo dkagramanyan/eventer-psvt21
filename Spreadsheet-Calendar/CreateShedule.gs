@@ -155,3 +155,27 @@ function hexToRgb(hex) {
   } 
   return null;
 }
+
+function ShareCalendar(userMail, calendarID)
+{
+
+  if (userMail != "")
+  {
+  var rule = {
+    'scope': {
+        'type': 'user',
+        'value': userMail,
+    },
+    'role': 'writer'
+  }
+  created_rule = Calendar.Acl.insert(rule, calendarID)
+  }
+}
+
+function onOpen()
+{
+  var ui = SpreadsheetApp.getUi();
+  ui.createMenu('Синхронизация с календарем')
+    .addItem('Создать расписание','CreateShedule')
+    .addToUi();
+}
