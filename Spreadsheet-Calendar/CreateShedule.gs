@@ -14,20 +14,31 @@ function CreateShedule(){
   }
   var calendars = []
 
-  var Names = spreadsheet.getRange("A3:A4").getValues();
-  var NewNames = []
-  Names.forEach( value => {
+  let names = spreadsheet.getRange("A3:A4").getValues();
+  let newNames = [];
+  let emailList = spreadsheet.getRange("B3:B4").getValues();
+  let newEmailList = [];
+  names.forEach( value => {
     if(!ExistCalendars.includes(value[0])){
-      //  Logger.log(value + " at position " + Names.indexOf("value"))
-       NewNames.push(value)
+       newNames.push(value)
     }
   })
-  Logger.log("New Names: " + NewNames) // <- print new calendars to create
+  emailList.forEach( value => {
+    if(!emailList.includes(value[0])){
+       newEmailList.push(value)
+    }
+  })
+  Logger.log("New Names: " + newNames)
   /////////////////////////////////
-  // Create new Calendars
-  for (i=0; i<NewNames.length; i++)
+  let newCalendars = []
+  for (i=0; i<newNames.length; i++)
   {
-    CalendarApp.createCalendar(NewNames[i])
+    CalendarApp.createCalendar(newNames[i])
+    newCalendars.push(CalendarApp.getCalendarsByName(newNames[i]))
+  }
+  for (i=0; i< newCalendars.length; i++)
+  {
+    ShareCalendar(newEmailList[i][0], newCalendars[i][0].getId())
   }
   // Make list of calendars
   for (i=0; i<Names.length; i++)
