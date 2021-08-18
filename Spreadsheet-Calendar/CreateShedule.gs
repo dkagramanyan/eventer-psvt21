@@ -152,9 +152,9 @@ function GetRGBdistance(color1, color2){
 function hexToRgb(hex) {
   var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if(result){
-      var r= Int(result[1], 16);
-      var g= Int(result[2], 16);
-      var b= Int(result[3], 16);
+      var r= parseInt(result[1], 16);
+      var g= parseInt(result[2], 16);
+      var b= parseInt(result[3], 16);
       return [r, g, b]
   } 
   return null;
