@@ -1,11 +1,8 @@
-// Run this function in App Script
+
 function CreateShedule(){
-  // Connect to Spreadsheet
-  //var spreadsheet = SpreadsheetApp.getActiveSheet();// <- use if opened
-  var spreadsheet = SpreadsheetApp.openById('PUT YOUR ID HERE');
-  SpreadsheetApp.setActiveSheet(spreadsheet.getSheets()[1]); // Select sheet
-  var calendars = [] // There will be a calendar for aech person
-  ///////////////////////////// Check for existing calendars with the same name
+  
+  var calendars = []
+  /////////////////////////////
   var allCalendars = CalendarApp.getAllCalendars()
   var ExistCalendars = []
   for(i=0; i< allCalendars.length; i++)
@@ -13,42 +10,25 @@ function CreateShedule(){
     ExistCalendars.push(allCalendars[i].getName())
   }
   var calendars = []
-
-  let names = spreadsheet.getRange("A3:A4").getValues();
+  var [names, emailList, Time, Events, EventColors] = GetSpreadsheetValues()
   let newNames = [];
-  let emailList = spreadsheet.getRange("B3:B4").getValues();
   let newEmailList = [];
-  names.forEach( value => {
-    if(!ExistCalendars.includes(value[0])){
+  names.forEach( value => {if(!ExistCalendars.includes(value[0])){
        newNames.push(value)
     }
   })
-  emailList.forEach( value => {
-    if(!emailList.includes(value[0])){
+  emailList.forEach( value => {if(!emailList.includes(value[0])){
        newEmailList.push(value)
     }
   })
   Logger.log("New Names: " + newNames)
   /////////////////////////////////
-  let newCalendars = []
-  for (i=0; i<newNames.length; i++)
+  CreateShareCalendars(newNames, newEmailList)
+
+  for (i=0; i<names.length; i++)
   {
-    CalendarApp.createCalendar(newNames[i])
-    newCalendars.push(CalendarApp.getCalendarsByName(newNames[i]))
+    calendars.push(CalendarApp.getCalendarsByName(names[i]))
   }
-  for (i=0; i< newCalendars.length; i++)
-  {
-    ShareCalendar(newEmailList[i][0], newCalendars[i][0].getId())
-  }
-  // Make list of calendars
-  for (i=0; i<Names.length; i++)
-  {
-    calendars.push(CalendarApp.getCalendarsByName(Names[i]))
-  }
-  ////////// TODO: Make a Fucntion, witch will get one range and parse it
-  let Time = spreadsheet.getRange("C1:M1").getDisplayValues();
-  let Events = spreadsheet.getRange("C3:L4").getValues();
-  let EventColors = spreadsheet.getRange("C3:L4").getBackgrounds();
   
   for (i=0; i<calendars.length; i++)
   {
@@ -61,7 +41,6 @@ function CreateShedule(){
       allEvents[j].deleteEvent()
     }
     var NewEventsList = []
-    // default calendar color list.
     var CalendarColorList = ["#039be5", "#33b679", "#7986cb", "#e67c73", "#f6bf26", "#f4511e", "#8e24aa", "#616161", "#3f51b5", "#0b8043","#d50000"]
     var prevEventName = null
     var prevEventColor = null
@@ -108,7 +87,30 @@ function CreateShedule(){
   }
 }
 
-// Create Date object from strings
+
+function GetSpreadsheetValues(){
+  let spreadsheet = SpreadsheetApp.openById('1xJJdpjHQddkx6Rnm6npW6O0VWKBNq4IkVsIP6Hszl_w');
+  SpreadsheetApp.setActiveSheet(spreadsheet.getSheets()[1]);
+  let names = spreadsheet.getRange("A3:A4").getValues();
+  let emailList = spreadsheet.getRange("B3:B4").getValues();
+  let Time = spreadsheet.getRange("C1:M1").getDisplayValues();
+  let Events = spreadsheet.getRange("C3:L4").getValues();
+  let EventColors = spreadsheet.getRange("C3:L4").getBackgrounds();
+  return [names, emailList, Time, Events, EventColors]
+}
+function CreateShareCalendars(newNames, newEmailList){
+  let newCalendars = []
+  for (i=0; i<newNames.length; i++)
+  {
+    CalendarApp.createCalendar(newNames[i])
+    // newCalendars.push(CalendarApp.getCalendarsByName(newNames[i])[0].getId())
+  }
+  for (i=0; i< newNames.length; i++)
+  {
+    ShareCalendar(newEmailList[i][0], CalendarApp.getCalendarsByName(newNames[i])[0].getId())
+  }
+}
+
 function GetDate(datetime){
   var reg = /(\d{2}).(\d{2}).(\d{4}) (\d{2}):(\d{2}):(\d{2})/;
   var dateArray = reg.exec(datetime); 
@@ -123,7 +125,6 @@ function GetDate(datetime){
   return dateObject;
 }
 
-// Minimal color by RGBdistance metrics
 function FindNearestColor(color, colorList){
   let colorMinDist = 255*3;
   var colorToReturn = 0;
@@ -137,14 +138,12 @@ function FindNearestColor(color, colorList){
   return colorToReturn+1
 }
 
-// Count color metrics
 function GetRGBdistance(color1, color2){
   let hex1 = hexToRgb(color1)
   let hex2 = hexToRgb(color2)
   return (hex1[0]-hex2[0])**2 + (hex1[1]-hex2[1])**2 + (hex1[2]-hex2[2])**2
 }
 
-// String with hexadecimal to Int
 function hexToRgb(hex) {
   var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if(result){
