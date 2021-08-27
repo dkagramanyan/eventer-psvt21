@@ -1,36 +1,8 @@
-/*
-  94 строка: внести id гугл таблицы в функцию.
-  ID часть url адреса между  spreadsheets и edit - "spreadsheets/d/123456/edit" - в данном случае 123456
-  Убедиться, что код запускается не с личного аккаунта пользователя,
-  инчае это создаст все календари непосредственно в его гугл календаре.
-*/
 
-function CreateShedule(){
-  
-  var calendars = []
-  /////////////////////////////
-  var allCalendars = CalendarApp.getAllCalendars()
-  var ExistCalendars = []
-  for(i=0; i< allCalendars.length; i++)
-  {
-    ExistCalendars.push(allCalendars[i].getName())
-  }
+function UpdateShedule()
+{
   var calendars = []
   var [names, emailList, Time, Events, EventColors, DateZero] = GetSpreadsheetValues()
-  let newNames = [];
-  let newEmailList = [];
-  names.forEach( value => {if(!ExistCalendars.includes(value[0])){
-       newNames.push(value)
-    }
-  })
-  emailList.forEach( value => {if(!emailList.includes(value[0])){
-       newEmailList.push(value)
-    }
-  })
-  Logger.log("New Names: " + newNames)
-  /////////////////////////////////
-  CreateShareCalendars(newNames, newEmailList)
-
   for (i=0; i<names.length; i++)
   {
     calendars.push(CalendarApp.getCalendarsByName(names[i]))
@@ -123,25 +95,13 @@ function CreateShedule(){
 function GetSpreadsheetValues(){
   let spreadsheet = SpreadsheetApp.openById('1xJJdpjHQddkx6Rnm6npW6O0VWKBNq4IkVsIP6Hszl_w');
   SpreadsheetApp.setActiveSheet(spreadsheet.getSheets()[0]);
-  let names = spreadsheet.getRange("A19:A20").getValues();
-  let emailList = spreadsheet.getRange("B19:B20").getValues();
-  let DateZero = spreadsheet.getRange("B1").getDisplayValues()[0][0];
-  let Time = spreadsheet.getRange("C1:BP1").getDisplayValues();
-  let Events = spreadsheet.getRange("C19:BO20").getValues();
-  let EventColors = spreadsheet.getRange("C19:BO20").getBackgrounds();
+  let names = spreadsheet.getRange(ParseDiap()[0]).getValues();
+  let emailList = spreadsheet.getRange(ParseDiap()[1]).getValues();
+  let DateZero = spreadsheet.getRange("C1").getDisplayValues()[0][0];
+  let Time = spreadsheet.getRange(ParseDiap()[2]).getDisplayValues();
+  let Events = spreadsheet.getRange(ParseDiap()[3]).getValues();
+  let EventColors = spreadsheet.getRange(ParseDiap()[3]).getBackgrounds();
   return [names, emailList, Time, Events, EventColors, DateZero]
-}
-function CreateShareCalendars(newNames, newEmailList){
-  let newCalendars = []
-  for (i=0; i<newNames.length; i++)
-  {
-    CalendarApp.createCalendar(newNames[i])
-    newCalendars.push(CalendarApp.getCalendarsByName(newNames[i])[0].getId())
-  }
-  for (i=0; i< newNames.length; i++)
-  {
-    // ShareCalendar(newEmailList[i][0], CalendarApp.getCalendarsByName(newNames[i])[0].getId())
-  }
 }
 
 function GetTime(timeArray, dateArray, shift){
@@ -161,20 +121,6 @@ function GetDate(date){
   var dateArray = reg.exec(date); 
   return dateArray;
 }
-
-// function GetDate(date){
-//   var reg = /(\d{2}).(\d{2}).(\d{4}) (\d{2}):(\d{2}):(\d{2})/;
-//   var dateArray = reg.exec(date); 
-//   var dateObject = new Date(
-//     (+dateArray[3]),
-//     (+dateArray[2])-1, // Careful, month starts at 0!
-//     (+dateArray[1]),
-//     (+dateArray[4]),
-//     (+dateArray[5]),
-//     (+dateArray[6])
-//   );
-//   return dateObject;
-// }
 
 function FindNearestColor(color, colorList){
   let colorMinDist = 255*3;
@@ -205,28 +151,3 @@ function hexToRgb(hex) {
   } 
   return null;
 }
-
-function ShareCalendar(userMail, calendarID)
-{
-
-  if (userMail != "")
-  {
-  var rule = {
-    'scope': {
-        'type': 'user',
-        'value': userMail,
-    },
-    'role': 'writer'
-  }
-  created_rule = Calendar.Acl.insert(rule, calendarID)
-  }
-}
-
-function onOpen()
-{
-  var ui = SpreadsheetApp.getUi();
-  ui.createMenu('Синхронизация с календарем')
-    .addItem('Создать расписание','CreateShedule')
-    .addToUi();
-}
-
