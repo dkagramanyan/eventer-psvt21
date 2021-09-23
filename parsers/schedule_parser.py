@@ -110,3 +110,68 @@ def get_table(spreadsheet: str, ranges: str) -> list:
                 print(f'{datetime.now(timezone(timedelta(hours=3.0)))} - parsers:schedule_parser - {e}', file=f)
 
     return table
+
+
+class Event:
+    """The event object.
+
+    name - person's name
+    surname - the person's surname
+    user_name - the person's telegram tag
+    event_name - place or action that the person should do
+    start - start time of the event
+    end - end time of the event
+
+    """
+
+    def __init__(self,
+                 name='name',
+                 surname='surname',
+                 user_name='user_name',
+                 event_name='event_name',
+                 start=datetime.strptime('0:00', '%H:%M').time(),
+                 end=datetime.strptime('0:00', '%H:%M').time()
+                 ):
+        self.name = name
+        self.surname = surname
+        self.user_name = user_name
+        self.event_name = event_name
+        self.start = start
+        self.end = end
+
+    def __repr__(self):
+        return f'Event<{self.surname} {self.name} (@{self.user_name}): {self.start} - {self.end} {self.event_name}>'
+
+
+def parser(table: list) -> set:
+    """The function to create a set of events from the parsed table.
+
+    :param table: list of columns with formatted values or None
+    :type table: list[[str | None, ...], ...]
+
+    :return:
+    :rtype: set[{Event}, ...]
+    """
+
+    evnts = set()
+
+    names = table[0][1:]
+    events = [table[i][1:] for i in range(5, 68)]
+    timings = [table[i][0] for i in range(5, 68)] + ['23:59']
+
+    for person, name in enumerate(names):
+        surname, name = name.split()
+
+        # filling the evnts
+        for number, event_name in enumerate(events):
+            event = Event(
+                name=name,
+                surname=surname,
+                event_name=event_name[person],
+                start=datetime.strptime(timings[number], '%H:%M').time(),
+                end=datetime.strptime(timings[number + 1], '%H:%M').time()
+            )
+
+            evnts.add(event)
+
+    return evnts
