@@ -1,99 +1,99 @@
-from config import token, pin, database as db
+#!/usr/bin/env python
+# coding: utf-8
+
+from bot.configBot import token, pin
 import telebot
 from telebot import types
-import psycopg2 as psy
-from psycopg2 import OperationalError
+from db import get
 
-bot = telebot.TeleBot(token)
-logged_users = {}
+bot = telebot.TeleBot(token)  # connection to the tg bot
+logged_users = {}  # dictionary of users who correctly wrote the password
 
-
-def connect_to_database():
-    try:
-        conn = psy.connect(user=db['user'],
-                           password=db['password'],
-                           host=db['host'],
-                           port=db['port'],
-                           database=db['database'])
-        return conn
-    except OperationalError as error:
-        print('Ошибка при работе с PostgreSQL', error)
+connection = get.connection()  # connection to the db
 
 
-connection = connect_to_database()
+def name(message: types.Message) -> None:
+    """The function of inviting the user to write his name.
+    The next step is to invite to write his surname.
 
+    :param message: the received message from telegram
+    :type message: types.Message
 
-def name(message):
+    :return: nothing
+    :rtype: None
+    """
     first_name = bot.send_message(message.chat.id, 'Напиши свое имя')
     bot.register_next_step_handler(first_name, save_first_name)
 
 
-def save_first_name(message):
+def save_first_name(message: types.Message) -> None:
+    """The function of inviting the user to write his surname.
+    The next step is to save the received data to the database.
+
+    :param message: the received message from telegram
+    :type message: types.Message
+
+    :return: nothing
+    :rtype: None
+    """
     first_name = message.text
+
     last_name = bot.send_message(message.chat.id, 'Напиши свою фамилию')
     bot.register_next_step_handler(last_name, save_last_name, first_name)
 
 
-def save_last_name(message, first_name):
+def save_last_name(message: types.Message, first_name: str) -> None:
+    """The function of saving the received data to the database.
+
+    :param message: the received message from telegram
+    :type message: types.Message
+
+    :param first_name: the received user's name
+    :type first_name: str
+
+    :return: nothing
+    :rtype: None
+    """
     last_name = message.text
-    if first_name != 'Фамилии' and last_name != '':
-        give_schedule_by_name_and_surname(message, first_name, last_name)
-    elif first_name == 'Фамилии' and last_name != '':
-        give_schedule_by_surname(message, last_name)
 
+    message_text = ''
 
-def give_schedule_by_name_and_surname(message, first_name, last_name):
-    global connection
-    cursor = connection.cursor()
+    if last_name != '':
+        if first_name == 'Фамилии':
+            message_text = get.schedule_by_surname(connection, last_name)
+        else:
+            message_text = get.schedule_by_name_and_surname(connection, first_name, last_name)
 
-    cursor.execute("SELECT id "
-                   "FROM plat_people_main "
-                   "WHERE similarity(first_name, %s) > 0.5 AND similarity(middle_name, %s) > 0.5",
-                   (first_name, last_name))
-    person_id = cursor.fetchone()[0]
-
-    cursor.execute("SELECT name, time_from, time_to "
-                   "FROM plat_people_main as ppm "
-                   "JOIN plat_timetable_main as ptm ON ppm.id = ptm.org_id "
-                   "JOIN plat_timetable_cases as ptc ON ptm.event_id = ptc.id "
-                   "WHERE org_id = %s", (person_id, ))
-    schedule = cursor.fetchall()
-
-    bot.send_message(message.chat.id, f'Название: {schedule[0][0]}\n'
-                                      f'Время начала: {str(schedule[0][1])[:2]}:{str(schedule[0][1])[2:]}\n'
-                                      f'Время конца: {str(schedule[0][2])[:2]}:{str(schedule[0][2])[2:]}')
-
-
-def give_schedule_by_surname(message, last_name):
-    global connection
-    cursor = connection.cursor()
-
-    cursor.execute("SELECT id "
-                   "FROM plat_people_main "
-                   "WHERE similarity(middle_name, %s) > 0.5",
-                   (last_name, ))
-    person_id = cursor.fetchone()[0]
-
-    cursor.execute("SELECT name, time_from, time_to "
-                   "FROM plat_people_main as ppm "
-                   "JOIN plat_timetable_main as ptm ON ppm.id = ptm.org_id "
-                   "JOIN plat_timetable_cases as ptc ON ptm.event_id = ptc.id "
-                   "WHERE org_id = %s", (person_id, ))
-    schedule = cursor.fetchall()
-
-    bot.send_message(message.chat.id, f'Название: {schedule[0][0]}\n'
-                                      f'Время начала: {str(schedule[0][1])[:2]}:{str(schedule[0][1])[2:]}\n'
-                                      f'Время конца: {str(schedule[0][2])[:2]}:{str(schedule[0][2])[2:]}')
+    if message_text:
+        bot.send_message(message.chat.id, message_text)
 
 
 @bot.message_handler(commands=['start'])
-def hello_message(message):
+def hello_message(message: types.Message) -> None:
+    """The function is the handler of the start command.
+    The next step is to write a password.
+
+    :param message: the received message from telegram
+    :type message: types.Message
+
+    :return: nothing
+    :rtype: None
+    """
     bot.send_message(message.chat.id, 'Привет!\nЯ рад видеть тебя на этом прекрасном мероприятии')
+
     pin_code = bot.send_message(message.chat.id, 'Введите пароль!')
     bot.register_next_step_handler(pin_code, try_pin)
 
 
-def try_pin(message):
+def try_pin(message: types.Message) -> None:
+    """The password check function.
+
+    :param message: the received message from telegram
+    :type message: types.Message
+
+    :return: nothing
+    :rtype: None
+    """
     if message.text.lower() == pin:
         bot.send_message(message.chat.id, 'Введен правильный пароль. Доступ открыт!')
         logged_users[message.chat.first_name] = message.chat.id
@@ -103,17 +103,34 @@ def try_pin(message):
 
 
 @bot.message_handler(commands=['help'])
-def help_command(message):
-    bot.send_message(message.chat.id,
-                     f'В нашем боте существуют такие команды:\n'
-                     f'/start — полностью начинает работу бота заново\n'
-                     f'/help — выводит команды, которые существуют в боте\n'
-                     f'/schedule - выводит ваше расписание'
-                     )
+def help_command(message: types.Message) -> None:
+    """The function is the handler of the help command.
+
+    :param message: the received message from telegram
+    :type message: types.Message
+
+    :return: nothing
+    :rtype: None
+    """
+    bot.send_message(
+        message.chat.id,
+        f'В нашем боте существуют такие команды:\n'
+        f'/start — полностью начинает работу бота заново\n'
+        f'/help — выводит команды, которые существуют в боте\n'
+        f'/schedule - выводит ваше расписание'
+    )
 
 
 @bot.message_handler(commands=['schedule'])
 def give_schedule(message):
+    """The function is the handler of the schedule command.
+
+    :param message: the received message from telegram
+    :type message: types.Message
+
+    :return: nothing
+    :rtype: None
+    """
     buttons = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
 
     surname = types.KeyboardButton('Фамилии')
@@ -121,14 +138,30 @@ def give_schedule(message):
 
     buttons.add(surname, name_and_surname)
 
-    bot.send_message(message.chat.id, 'По этой команде вы можете получить свое расписание!\nПоиск по:',
-                     reply_markup=buttons)
+    bot.send_message(
+        message.chat.id,
+        'По этой команде вы можете получить свое расписание!\n'
+        'Поиск по:',
+        reply_markup=buttons
+    )
 
 
 @bot.message_handler(content_types=['text'])
-def handler(message):
+def handler(message: types.Message) -> None:
+    """The function is the handler of the text.
+    React to the following phrases:
+        'Фамилии' - starts the second step of obtaining information
+        'Фамилии и имени' - starts the first step of obtaining information
+
+    :param message: the received massage from telegram
+    :type message: types.Message
+
+    :return: nothing
+    :rtype: None
+    """
     if message.text == 'Фамилии':
         save_first_name(message)
+
     elif message.text == 'Фамилии и имени':
         name(message)
 
