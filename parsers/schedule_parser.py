@@ -129,12 +129,14 @@ class Event:
                  surname='surname',
                  user_name='user_name',
                  event_name='event_name',
+                 chat_id=0,
                  start=datetime.strptime('0:00', '%H:%M').time(),
                  end=datetime.strptime('0:00', '%H:%M').time()
                  ):
         self.name = name
         self.surname = surname
         self.user_name = user_name
+        self.chat_id = chat_id
         self.event_name = event_name
         self.start = start
         self.end = end
