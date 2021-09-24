@@ -130,3 +130,12 @@ dmypy.json
 
 # idea files
 /.idea/*
+
+# Secrets
+*config*
+token*
+*credentials*
+bot/configBot.py
+
+# Old
+*___jb_old___
