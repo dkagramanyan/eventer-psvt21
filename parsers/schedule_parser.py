@@ -118,6 +118,7 @@ class Event:
     name - person's name
     surname - the person's surname
     user_name - the person's telegram tag
+    chat_id - the person's telegram chat id
     event_name - place or action that the person should do
     start - start time of the event
     end - end time of the event
@@ -142,18 +143,16 @@ class Event:
         self.end = end
 
     def __repr__(self):
-        return f'Event<{self.surname} {self.name} (@{self.user_name}): {self.start} - {self.end} {self.event_name}>'
+        return f'Event<{self.surname} {self.name} (@{self.user_name} - {self.chat_id}): {self.start} - {self.end} {self.event_name}>'
 
 
-def parser(table: list) -> set:
+def parser() -> set:
     """The function to create a set of events from the parsed table.
 
-    :param table: list of columns with formatted values or None
-    :type table: list[[str | None, ...], ...]
-
-    :return:
-    :rtype: set[{Event}, ...]
+    :return: set of the Event objects
+    :rtype: set[Event, ...]
     """
+    table = get_table(spreadsheet_id, ranges)
 
     evnts = set()
 

@@ -5,6 +5,7 @@ from bot.configBot import token, pin
 import telebot
 from telebot import types
 from db import get
+from datetime import datetime
 
 bot = telebot.TeleBot(token)  # connection to the tg bot
 logged_users = {}  # dictionary of users who correctly wrote the password
@@ -56,15 +57,32 @@ def save_last_name(message: types.Message, first_name: str) -> None:
     """
     last_name = message.text
 
-    message_text = ''
+    events = get.events_from_db(first_name, last_name)
 
-    if last_name != '':
-        if first_name == 'Фамилии':
-            message_text = get.schedule_by_surname(connection, last_name)
-        else:
-            message_text = get.schedule_by_name_and_surname(connection, first_name, last_name)
+    message_text = ''
+    rows = []
+
+    if events:
+        for event in events:
+            if event.start > datetime.now().time():
+                rows.append(f'{event.start.strftime("%H:%M")} - {event.end.strftime("%H:%M")} {event.event_name}')
+
+        message_text = '\n'.join(rows)
 
     if message_text:
+        nrows = 70
+        if len(rows) > nrows:
+            i = 0
+            message_text = '\n'.join(rows[i: i + nrows])
+            while i < len(rows) + nrows and message_text:
+                bot.send_message(message.chat.id, message_text)
+                i += nrows
+                message_text = '\n'.join(rows[i: i + nrows])
+
+        else:
+            bot.send_message(message.chat.id, message_text)
+    else:
+        message_text = 'Ивентов не найдено.'
         bot.send_message(message.chat.id, message_text)
 
 

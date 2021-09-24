@@ -6,6 +6,7 @@ import psycopg2 as psy
 from psycopg2 import OperationalError
 from psycopg2 import extensions
 from datetime import datetime, timezone, timedelta
+from parsers.schedule_parser import parser
 
 
 def connection() -> extensions.connection:
@@ -28,6 +29,37 @@ def connection() -> extensions.connection:
         print(f'{datetime.now(timezone(timedelta(hours=3.0)))} - '
               f'db.get.connection() - '
               f'Ошибка при работе с PostgreSQL "{error}"')
+
+
+def events_from_db(first_name: str, last_name: str) -> set:
+    """
+
+    :param first_name: the user's name
+    :type first_name: str
+
+    :param last_name: the user's surname
+    :type last_name: str
+
+    :return: set of the Event objects
+    :rtype: set[Event, ...]
+    """
+    # TODO db -> set(Event, ...)
+    events = set()
+
+    if last_name != '':
+        if first_name == 'Фамилии':
+            # events = schedule_by_surname(connection, last_name)
+            # TODO get set(Event, ...) by surname
+            events = set()
+
+        else:
+            # events = schedule_by_name_and_surname(connection, first_name, last_name)
+            # TODO get set(Event, ...) by name and surname
+            events = set()
+
+        events = parser()
+
+    return events
 
 
 def schedule_by_name_and_surname(connection: extensions.connection, first_name: str, last_name: str) -> str:
