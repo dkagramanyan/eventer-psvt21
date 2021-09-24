@@ -12,7 +12,7 @@ def session() -> Session:
     return ssn
 
 
-def people_from_db(ssn: Session, all=False) -> dict:
+def people_from_db(ssn: Session) -> dict:
     return {
     persondb.id: {'first_name': persondb.first_name, 'last_name': persondb.last_name, 'chat_id': persondb.tg_chat_id}
     for persondb in ssn.query(PersonDB)}

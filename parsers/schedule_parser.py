@@ -171,7 +171,6 @@ def parser() -> list:
     names = table[0][1:]
     events = [table[i][1:] for i in range(5, 68)]
     timings = [table[i][0] for i in range(5, 68)] + ['00:00']
-    # date = datetime.strptime('2021-02-10', '%Y-%m-%d')
 
     for person, name in enumerate(names):
         date = '2021-02-10'
