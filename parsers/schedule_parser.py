@@ -106,7 +106,7 @@ def get_table(spreadsheet: str, ranges: str) -> list:
                 table[i].append(formatted_value)
 
         except Exception as e:
-            with open('parser.log', 'a') as f:
+            with open('../parsers/parser.log', 'a') as f:
                 print(f'{datetime.now(timezone(timedelta(hours=3.0)))} - parsers:schedule_parser - {e}', file=f)
 
     return table

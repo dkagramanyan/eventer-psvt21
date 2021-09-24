@@ -3,11 +3,12 @@
 
 from db.configDB import db
 import psycopg2 as psy
-from psycopg2._psycopg import OperationalError
+from psycopg2 import OperationalError
+from psycopg2 import extensions
 from datetime import datetime, timezone, timedelta
 
 
-def connection() -> psy._psycopg.connection:
+def connection() -> extensions.connection:
     """The function to getting the connection to the database by information from the configDB file.
 
     :return: connection object
@@ -29,7 +30,7 @@ def connection() -> psy._psycopg.connection:
               f'Ошибка при работе с PostgreSQL "{error}"')
 
 
-def schedule_by_name_and_surname(connection: psy._psycopg.connection, first_name: str, last_name: str) -> str:
+def schedule_by_name_and_surname(connection: extensions.connection, first_name: str, last_name: str) -> str:
     """The function of getting the text of the message to send to the user by his name and surname.
 
     :param connection: connection object
@@ -66,7 +67,7 @@ def schedule_by_name_and_surname(connection: psy._psycopg.connection, first_name
     return message_text
 
 
-def schedule_by_surname(connection: psy._psycopg.connection, last_name: str) -> str:
+def schedule_by_surname(connection: extensions.connection, last_name: str) -> str:
     """The function of getting the text of the message to send to the user only by his surname.
 
     :param connection: connection object
