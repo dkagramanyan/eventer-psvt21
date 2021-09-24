@@ -66,7 +66,7 @@ def save_last_name(message: types.Message, first_name: str) -> None:
 
     if events:
         for event in events:
-            if event.start > datetime.now():
+            if event.start < datetime.now():
                 rows.append(f'{event.start.strftime("%H:%M")} - {event.end.strftime("%H:%M")} {event.event_name}')
 
         message_text = '\n'.join(rows)
