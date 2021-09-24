@@ -1,34 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from db.configDB import db
-import psycopg2 as psy
-from psycopg2 import OperationalError
-from psycopg2 import extensions
-from datetime import datetime, timezone, timedelta
 from parsers.schedule_parser import parser
-
-
-def connection() -> extensions.connection:
-    """The function to getting the connection to the database by information from the configDB file.
-
-    :return: connection object
-    :rtype: psy._psycopg.connection
-    """
-    try:
-        conn = psy.connect(
-            user=db['user'],
-            password=db['password'],
-            host=db['host'],
-            port=db['port'],
-            database=db['database']
-        )
-        return conn
-
-    except OperationalError as error:
-        print(f'{datetime.now(timezone(timedelta(hours=3.0)))} - '
-              f'db.get.connection() - '
-              f'Ошибка при работе с PostgreSQL "{error}"')
 
 
 def events_from_db(first_name: str, last_name: str) -> set:
