@@ -218,5 +218,8 @@ def handler(message: types.Message) -> None:
     elif message.text == 'Фамилии и имени':
         name(message)
 
+    else:
+        bot.send_message(message.chat.id, 'Чет не то')
+
 
 bot.polling()
