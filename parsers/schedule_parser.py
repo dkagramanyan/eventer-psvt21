@@ -131,8 +131,8 @@ class Event:
                  user_name='user_name',
                  event_name='event_name',
                  chat_id=0,
-                 start=datetime.strptime('0:00', '%H:%M').time(),
-                 end=datetime.strptime('0:00', '%H:%M').time()
+                 start=datetime.strptime('0:00', '%H:%M'),
+                 end=datetime.strptime('0:00', '%H:%M')
                  ):
         self.name = name
         self.surname = surname
@@ -145,8 +145,20 @@ class Event:
     def __repr__(self):
         return f'Event<{self.surname} {self.name} (@{self.user_name} - {self.chat_id}): {self.start} - {self.end} {self.event_name}>'
 
+    def __eq__(self, other):
+        try:
+            eq_name = self.name == other.name
+            eq_surname = self.surname == other.surname
+            eq_event_name = self.event_name == other.event_name
+            eq_start = self.start == other.start
+            eq_end = self.end == other.end
+            return eq_name and eq_surname and eq_event_name and eq_start and eq_end
 
-def parser() -> set:
+        except Exception as e:
+            return e
+
+
+def parser() -> list:
     """The function to create a set of events from the parsed table.
 
     :return: set of the Event objects
@@ -154,25 +166,36 @@ def parser() -> set:
     """
     table = get_table(spreadsheet_id, ranges)
 
-    evnts = set()
+    evnts = []
 
     names = table[0][1:]
     events = [table[i][1:] for i in range(5, 68)]
-    timings = [table[i][0] for i in range(5, 68)] + ['23:59']
+    timings = [table[i][0] for i in range(5, 68)] + ['00:00']
+    # date = datetime.strptime('2021-02-10', '%Y-%m-%d')
 
     for person, name in enumerate(names):
+        date = '2021-02-10'
         surname, name = name.split()
 
         # filling the evnts
         for number, event_name in enumerate(events):
+
+            if timings[number] == '0:00':
+                date = datetime.strptime(date, '%Y-%m-%d')
+                date += timedelta(days=1)
+                date = date.strftime('%Y-%m-%d')
+
+            time_start = datetime.strptime(date + ' ' + timings[number], '%Y-%m-%d %H:%M')
+            time_end = datetime.strptime(date + ' ' + timings[number + 1], '%Y-%m-%d %H:%M')
+
             event = Event(
                 name=name,
                 surname=surname,
                 event_name=event_name[person],
-                start=datetime.strptime(timings[number], '%H:%M').time(),
-                end=datetime.strptime(timings[number + 1], '%H:%M').time()
+                start=time_start,
+                end=time_end
             )
 
-            evnts.add(event)
+            evnts.append(event)
 
     return evnts

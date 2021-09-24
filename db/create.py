@@ -11,7 +11,7 @@ try:
     db = declarative_base()
 
 
-    class Person(db):
+    class PersonDB(db):
         __tablename__ = 'people'
 
         id = Column(Integer, primary_key=True)
@@ -20,7 +20,7 @@ try:
         tg_chat_id = Column(Integer)
         tg_username = Column(String)
 
-        def __init__(self, first_name, last_name, tg_chat_id, tg_username):
+        def __init__(self, first_name='first_name', last_name='last_name', tg_chat_id=0, tg_username='tg_username'):
             self.first_name = first_name
             self.last_name = last_name
             self.tg_chat_id = tg_chat_id
@@ -30,16 +30,17 @@ try:
             return f'<Person(name="{self.first_name}", surname="{self.last_name}", tg_username="{self.tg_username}")>'
 
 
-    class Event(db):
+    class EventDB(db):
         __tablename__ = 'schedule'
 
         id = Column(Integer, primary_key=True)
-        person_id = Column(Integer, ForeignKey(Person.id))
+        person_id = Column(Integer, ForeignKey(PersonDB.id))
         event_name = Column(String)
         start = Column(DateTime)
         end = Column(DateTime)
 
-        def __init__(self, person_id, event_name, start, end):
+        def __init__(self, person_id=0, event_name='event_name', start=datetime.strptime('0:00', '%H:%M').time(),
+                     end=datetime.strptime('0:00', '%H:%M').time()):
             self.person_id = person_id
             self.event_name = event_name
             self.start = start
