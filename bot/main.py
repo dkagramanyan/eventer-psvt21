@@ -4,13 +4,15 @@
 from bot.configBot import token, pin
 import telebot
 from telebot import types
-from db import get
+from db import get, update
 from datetime import datetime
+from db.create import PersonDB, EventDB
 
 bot = telebot.TeleBot(token)  # connection to the tg bot
 logged_users = {}  # dictionary of users who correctly wrote the password
 
-connection = get.connection()  # connection to the db
+
+# connection = get.connection()  # connection to the db
 
 
 def name(message: types.Message) -> None:
@@ -64,7 +66,7 @@ def save_last_name(message: types.Message, first_name: str) -> None:
 
     if events:
         for event in events:
-            if event.start > datetime.now().time():
+            if event.start > datetime.now():
                 rows.append(f'{event.start.strftime("%H:%M")} - {event.end.strftime("%H:%M")} {event.event_name}')
 
         message_text = '\n'.join(rows)
@@ -78,7 +80,6 @@ def save_last_name(message: types.Message, first_name: str) -> None:
                 bot.send_message(message.chat.id, message_text)
                 i += nrows
                 message_text = '\n'.join(rows[i: i + nrows])
-
         else:
             bot.send_message(message.chat.id, message_text)
     else:
@@ -97,13 +98,45 @@ def hello_message(message: types.Message) -> None:
     :return: nothing
     :rtype: None
     """
-    bot.send_message(message.chat.id, 'Привет!\nЯ рад видеть тебя на этом прекрасном мероприятии')
+    bot.send_message(message.chat.id, 'Привет!\nЯ рад видеть тебя на этом прекрасном мероприятии.')
+    user = User(
+        chat_id=message.chat.id,
+        username=message.chat.username
+    )
+    user_name_msg = bot.send_message(message.chat.id, 'Введите свое имя:')
+    bot.register_next_step_handler(user_name_msg, enter_name, user)
 
-    pin_code = bot.send_message(message.chat.id, 'Введите пароль!')
-    bot.register_next_step_handler(pin_code, try_pin)
+
+class User:
+
+    def __init__(self, name='', surname='', chat_id=0, username=''):
+        self.name = name
+        self.surname = surname
+        self.chat_id = chat_id
+        self.username = username
+
+    def __repr__(self):
+        return f'<User(name="{self.name}", surname="{self.surname}", chat_id="{self.chat_id}", username="{self.username}")>'
 
 
-def try_pin(message: types.Message) -> None:
+def enter_name(message: types.Message, user: User) -> None:
+    user.name = message.text
+    user_surname_msg = bot.send_message(message.chat.id, 'Введите свою фамилию:')
+    bot.register_next_step_handler(user_surname_msg, enter_surname, user)
+
+
+def enter_surname(message: types.Message, user: User) -> None:
+    user.surname = message.text
+    session = get.session()
+    persondb = session.query(PersonDB).filter_by(first_name=user.name, last_name=user.surname).first()
+    if persondb:
+        password_msg = bot.send_message(message.chat.id, 'Введите пароль:')
+        bot.register_next_step_handler(password_msg, enter_pin, user)
+    else:
+        bot.send_message(user.chat_id, 'Неправильные данные, попробуйте заново: /start')
+
+
+def enter_pin(message: types.Message, user: User) -> None:
     """The password check function.
 
     :param message: the received message from telegram
@@ -115,6 +148,8 @@ def try_pin(message: types.Message) -> None:
     if message.text.lower() == pin:
         bot.send_message(message.chat.id, 'Введен правильный пароль. Доступ открыт!')
         logged_users[message.chat.first_name] = message.chat.id
+        update.tg_chat_id(user.name, user.surname, user.chat_id)
+        update.tg_username(user.name, user.surname, user.username)
         bot.send_message(message.chat.id, 'Нажмите /help, чтобы узнать о командах')
     else:
         bot.send_message(message.chat.id, 'Неверный пароль, попробуйте еще раз!')
