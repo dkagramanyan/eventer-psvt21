@@ -17,8 +17,8 @@ try:
         id = Column(Integer, primary_key=True)
         first_name = Column(String)
         last_name = Column(String)
-        tg_chat_id = Column(Integer)
-        tg_username = Column(String)
+        tg_chat_id = Column(Integer, unique=True)
+        tg_username = Column(String, unique=True)
 
         def __init__(self, first_name='first_name', last_name='last_name', tg_chat_id=0, tg_username='tg_username'):
             self.first_name = first_name

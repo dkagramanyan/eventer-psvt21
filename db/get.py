@@ -4,6 +4,7 @@
 from parsers.schedule_parser import parser
 from db.create import engine, PersonDB, EventDB
 from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy import desc
 from parsers.schedule_parser import Event
 
 
@@ -40,7 +41,8 @@ def events_from_db(first_name='', last_name='', all=False) -> list:
 
         events = [Event(name=persondb.first_name, surname=persondb.last_name, user_name=persondb.tg_username,
                         event_name=eventdb.event_name, chat_id=persondb.tg_chat_id, start=eventdb.start,
-                        end=eventdb.end) for eventdb in ssn.query(EventDB).filter_by(person_id=persondb.id)]
+                        end=eventdb.end) for eventdb in
+                  ssn.query(EventDB).filter_by(person_id=persondb.id).order_by(desc(EventDB.start))[::-1]]
 
     elif all:
 

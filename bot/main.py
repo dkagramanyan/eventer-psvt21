@@ -12,9 +12,6 @@ bot = telebot.TeleBot(token)  # connection to the tg bot
 logged_users = {}  # dictionary of users who correctly wrote the password
 
 
-# connection = get.connection()  # connection to the db
-
-
 def name(message: types.Message) -> None:
     """The function of inviting the user to write his name.
     The next step is to invite to write his surname.
