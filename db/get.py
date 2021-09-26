@@ -65,29 +65,47 @@ def events_from_db(first_name='', last_name='', all=False) -> list:
     return events
 
 
-def events_to_db(events_from_google: list) -> None:
+def events_to_db(new_events: list) -> dict:
     ssn = session()
-    people = {persondb.first_name + '_' + persondb.last_name: persondb.id for persondb in ssn.query(PersonDB)}
+    people = {persondb.tg_username: persondb.id for persondb in ssn.query(PersonDB)}
     db_events = events_from_db(all=True)
+    messages = {}
 
-    for event in events_from_google:
-        if event not in db_events:
-            if f'{event.name}_{event.surname}' not in people.keys():
-                new_person = PersonDB(
-                    first_name=event.name,
-                    last_name=event.surname
-                )
-                ssn.add(new_person)
-                ssn.commit()
-                people[f'{event.name}_{event.surname}'] = new_person.id
+    for event in new_events:
+        if f'{event.user_name}' not in people.keys():
+            new_person = PersonDB(
+                first_name=event.name,
+                last_name=event.surname,
+                tg_username=event.user_name
+            )
+            ssn.add(new_person)
+            ssn.commit()
+            people[f'{event.user_name}'] = new_person.id
+        ssn.commit()
 
+        if not db_events:
             new_event_db = EventDB(
-                person_id=people[f'{event.name}_{event.surname}'],
+                person_id=people[f'{event.user_name}'],
                 event_name=event.event_name,
                 start=event.start,
                 end=event.end
             )
             ssn.add(new_event_db)
-            db_events.append(event)
+
+        else:
+            eventdb = ssn.query(EventDB).filter_by(
+                person_id=people[event.user_name],
+                start=event.start,
+            ).first()
+
+            if event.event_name != eventdb.event_name:
+                eventdb.event_name = event.event_name
+                person_tg_chat_id = ssn.query(PersonDB.tg_chat_id).filter_by(id=eventdb.person_id).first()[0]
+                if person_tg_chat_id not in messages.keys():
+                    messages[person_tg_chat_id] = []
+                messages[person_tg_chat_id].append(
+                    f'{eventdb.start.strftime("%H:%M")} - {eventdb.end.strftime("%H:%M")} {eventdb.event_name}')
 
     ssn.commit()
+
+    return messages
