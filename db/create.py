@@ -10,7 +10,6 @@ try:
     engine = create_engine(connect_path)
     db = declarative_base()
 
-
     class PersonDB(db):
         __tablename__ = 'people'
 
