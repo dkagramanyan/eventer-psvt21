@@ -143,7 +143,7 @@ class Event:
         self.end = end
 
     def __repr__(self):
-        return f'Event<{self.surname} {self.name} (@{self.user_name} - {self.chat_id}): {self.start} - {self.end} {self.event_name}>'
+        return f'<Event(name="{self.name}", surname="{self.surname}", user_name="{self.user_name}", chat_id="{self.chat_id}", start={self.start}", end="{self.end}", event_name="{self.event_name}")>'
 
     def __eq__(self, other):
         try:
@@ -169,12 +169,14 @@ def parser() -> list:
     evnts = []
 
     names = table[0][1:]
-    events = [table[i][1:] for i in range(5, 68)]
-    timings = [table[i][0] for i in range(5, 68)] + ['00:00']
+    tg_usernames = table[1][1:]
+    events = [table[i][1:] for i in range(6, 69)]
+    timings = [table[i][0] for i in range(6, 69)] + ['00:00']
 
     for person, name in enumerate(names):
         date = '2021-02-10'
         surname, name = name.split()
+        tg_username = tg_usernames[person]
 
         # filling the evnts
         for number, event_name in enumerate(events):
@@ -190,6 +192,7 @@ def parser() -> list:
             event = Event(
                 name=name,
                 surname=surname,
+                user_name=tg_username,
                 event_name=event_name[person],
                 start=time_start,
                 end=time_end

@@ -10,7 +10,6 @@ try:
     engine = create_engine(connect_path)
     db = declarative_base()
 
-
     class PersonDB(db):
         __tablename__ = 'people'
 
@@ -18,7 +17,7 @@ try:
         first_name = Column(String)
         last_name = Column(String)
         tg_chat_id = Column(Integer)
-        tg_username = Column(String)
+        tg_username = Column(String, unique=True)
 
         def __init__(self, first_name='first_name', last_name='last_name', tg_chat_id=0, tg_username='tg_username'):
             self.first_name = first_name
