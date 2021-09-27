@@ -78,9 +78,8 @@ def help_command(message: types.Message) -> None:
     try:
         bot.send_message(
             chat_id=message.chat.id,
-            text=f'/start — полностью начинает работу бота заново\n'
-            f'/help — выводит команды, которые существуют в боте\n'
-            f'/schedule - выводит ваше расписание'
+            text='/help - вывести имеющиеся команды\n'
+                 '/schedule - запросить расписание'
         )
 
     except Exception as e:

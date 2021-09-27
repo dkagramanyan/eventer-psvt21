@@ -98,7 +98,7 @@ def events_to_db(new_events: list) -> dict:
                 start=event.start,
             ).first()
 
-            if event.event_name != eventdb.event_name:
+            if event and eventdb and event.event_name != eventdb.event_name:
                 eventdb.event_name = event.event_name
                 person_tg_chat_id = ssn.query(PersonDB.tg_chat_id).filter_by(id=eventdb.person_id).first()[0]
                 if person_tg_chat_id not in messages.keys():
