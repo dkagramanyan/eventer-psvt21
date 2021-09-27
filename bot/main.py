@@ -220,7 +220,7 @@ def send_schedule(message: types.Message, first_name: str) -> None:
         if events:  # create rows of events by list of events
             for event in events:
                 if event.start < datetime.now():
-                    rows.append(f'{event.start.strftime("%H:%M")} - {event.end.strftime("%H:%M")} {event.event_name}')
+                    rows.append(f'{event.start.strftime("%H:%M")} - {event.end.strftime("%H:%M")} {event.action}')
 
             message_text = '\n'.join(rows)
 

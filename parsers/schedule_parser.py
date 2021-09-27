@@ -119,7 +119,7 @@ class Event:
     surname - the person's surname
     user_name - the person's telegram tag
     chat_id - the person's telegram chat id
-    event_name - place or action that the person should do
+    action - place or action that the person should do
     start - start time of the event
     end - end time of the event
 
@@ -129,7 +129,7 @@ class Event:
                  name='name',
                  surname='surname',
                  user_name='user_name',
-                 event_name='event_name',
+                 action='action',
                  chat_id=0,
                  start=datetime.strptime('0:00', '%H:%M'),
                  end=datetime.strptime('0:00', '%H:%M')
@@ -138,21 +138,21 @@ class Event:
         self.surname = surname
         self.user_name = user_name
         self.chat_id = chat_id
-        self.event_name = event_name
+        self.action = action
         self.start = start
         self.end = end
 
     def __repr__(self):
-        return f'<Event(name="{self.name}", surname="{self.surname}", user_name="{self.user_name}", chat_id="{self.chat_id}", start={self.start}", end="{self.end}", event_name="{self.event_name}")>'
+        return f'<Event(name="{self.name}", surname="{self.surname}", user_name="{self.user_name}", chat_id="{self.chat_id}", start={self.start}", end="{self.end}", action="{self.action}")>'
 
     def __eq__(self, other):
         try:
             eq_name = self.name == other.name
             eq_surname = self.surname == other.surname
-            eq_event_name = self.event_name == other.event_name
+            eq_action = self.action == other.action
             eq_start = self.start == other.start
             eq_end = self.end == other.end
-            return eq_name and eq_surname and eq_event_name and eq_start and eq_end
+            return eq_name and eq_surname and eq_action and eq_start and eq_end
 
         except Exception as e:
             return e
@@ -179,7 +179,7 @@ def parser() -> list:
         tg_username = tg_usernames[person]
 
         # filling the evnts
-        for number, event_name in enumerate(events):
+        for number, action in enumerate(events):
 
             if timings[number] == '0:00':
                 date = datetime.strptime(date, '%Y-%m-%d')
@@ -193,7 +193,7 @@ def parser() -> list:
                 name=name,
                 surname=surname,
                 user_name=tg_username,
-                event_name=event_name[person],
+                action=action[person],
                 start=time_start,
                 end=time_end
             )

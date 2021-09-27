@@ -34,19 +34,19 @@ try:
 
         id = Column(Integer, primary_key=True)
         person_id = Column(Integer, ForeignKey(PersonDB.id))
-        event_name = Column(String)
+        action = Column(String)
         start = Column(DateTime)
         end = Column(DateTime)
 
-        def __init__(self, person_id=0, event_name='event_name', start=datetime.strptime('0:00', '%H:%M').time(),
+        def __init__(self, person_id=0, action='action', start=datetime.strptime('0:00', '%H:%M').time(),
                      end=datetime.strptime('0:00', '%H:%M').time()):
             self.person_id = person_id
-            self.event_name = event_name
+            self.action = action
             self.start = start
             self.end = end
 
         def __repr__(self):
-            return f'<Event(person_id="{self.person_id}", event_name="{self.event_name}", start="{self.start}", end="{self.end}")>'
+            return f'<Event(person_id="{self.person_id}", action="{self.action}", start="{self.start}", end="{self.end}")>'
 
 
     db.metadata.create_all(engine)

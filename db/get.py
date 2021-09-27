@@ -40,13 +40,13 @@ def events_from_db(first_name='', last_name='', all=False) -> list:
             persondb = ssn.query(PersonDB).filter_by(last_name=last_name, first_name=first_name).first()
 
         events = [Event(name=persondb.first_name, surname=persondb.last_name, user_name=persondb.tg_username,
-                        event_name=eventdb.event_name, chat_id=persondb.tg_chat_id, start=eventdb.start,
+                        action=eventdb.action, chat_id=persondb.tg_chat_id, start=eventdb.start,
                         end=eventdb.end) for eventdb in
                   ssn.query(EventDB).filter_by(person_id=persondb.id).order_by(desc(EventDB.start))[::-1]]
 
     elif all:
 
-        data_event = (list({'person_id': eventdb.person_id, 'event_name': eventdb.event_name, 'start': eventdb.start,
+        data_event = (list({'person_id': eventdb.person_id, 'action': eventdb.action, 'start': eventdb.start,
                             'end': eventdb.end} for eventdb in ssn.query(EventDB)))
         data_person = {persondb.id: {'first_name': persondb.first_name, 'last_name': persondb.last_name,
                                      'chat_id': persondb.tg_chat_id} for persondb in ssn.query(PersonDB)}
@@ -56,7 +56,7 @@ def events_from_db(first_name='', last_name='', all=False) -> list:
                 name=data_person[event['person_id']]['first_name'],
                 surname=data_person[event['person_id']]['last_name'],
                 chat_id=data_person[event['person_id']]['chat_id'],
-                event_name=event['event_name'],
+                action=event['action'],
                 start=event['start'],
                 end=event['end']
             )
@@ -86,7 +86,7 @@ def events_to_db(new_events: list) -> dict:
         if not db_events:
             new_event_db = EventDB(
                 person_id=people[f'{event.user_name}'],
-                event_name=event.event_name,
+                action=event.action,
                 start=event.start,
                 end=event.end
             )
@@ -98,13 +98,13 @@ def events_to_db(new_events: list) -> dict:
                 start=event.start,
             ).first()
 
-            if event and eventdb and event.event_name != eventdb.event_name:
-                eventdb.event_name = event.event_name
+            if event and eventdb and event.action != eventdb.action:
+                eventdb.action = event.action
                 person_tg_chat_id = ssn.query(PersonDB.tg_chat_id).filter_by(id=eventdb.person_id).first()[0]
                 if person_tg_chat_id not in messages.keys():
                     messages[person_tg_chat_id] = []
                 messages[person_tg_chat_id].append(
-                    f'{eventdb.start.strftime("%H:%M")} - {eventdb.end.strftime("%H:%M")} {eventdb.event_name}')
+                    f'{eventdb.start.strftime("%H:%M")} - {eventdb.end.strftime("%H:%M")} {eventdb.action}')
 
     ssn.commit()
 
