@@ -34,7 +34,7 @@ def events_from_db(first_name='', last_name='', all=False) -> list:
     events = []
     ssn = session()
     if last_name != '':
-        if first_name == 'Фамилии':
+        if first_name == 'По фамилии':
             persondb = ssn.query(PersonDB).filter_by(last_name=last_name).first()
         else:
             persondb = ssn.query(PersonDB).filter_by(last_name=last_name, first_name=first_name).first()
