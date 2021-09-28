@@ -29,6 +29,7 @@ def database(bot: TeleBot) -> None:
     """
 
     while True:
+        print(f'INFO: {datetime.now()} - db.update.database - db is updating')
 
         try:
             new_events = get.events_to_db(parser())
@@ -40,6 +41,12 @@ def database(bot: TeleBot) -> None:
                         text='Расписание изменено:\n' + '\n'.join(new_events[chat_id])
                     )
                     time.sleep(0.2)
+
+            if new_events:
+                print(f'INFO: {datetime.now()} - db.update.database - db was update')
+
+            else:
+                print(f'INFO: {datetime.now()} - db.update.database - completion db update')
 
             time.sleep(60)
 
