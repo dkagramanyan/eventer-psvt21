@@ -91,7 +91,8 @@ def help_command(message: types.Message) -> None:
     try:
         bot.send_message(
             chat_id=message.chat.id,
-            text='/help - вывести имеющиеся команды\n'
+            text='/start - авторизироваться\n'
+                 '/help - вывести имеющиеся команды\n'
                  '/schedule - запросить расписание'
         )
 

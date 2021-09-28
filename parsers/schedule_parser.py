@@ -8,7 +8,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 import logging
-from parsers.configParser import ggl_token_file_name, credentials_file_name, spreadsheet_id, number_orginizers, ranges
+from parsers.configParser import ggl_token_file_name, credentials_file_name, spreadsheet_id, ranges
 import os
 from datetime import datetime, timezone, timedelta
 
@@ -101,7 +101,7 @@ def get_table(spreadsheet: str, ranges: str) -> list:
         ranges=ranges
     )
 
-    for row in row_data[:number_orginizers + 1]:
+    for row in row_data:
         try:
             # filling the table
             for i, value in enumerate(row['values']):
@@ -111,7 +111,11 @@ def get_table(spreadsheet: str, ranges: str) -> list:
                 if value and 'formattedValue' in value.keys():
                     formatted_value = value['formattedValue']
                 else:
-                    formatted_value = 'Отдых'
+                    if i == 0:
+                        continue
+
+                    else:
+                        formatted_value = 'Отдых'
 
                 table[i].append(formatted_value)
 
@@ -189,7 +193,13 @@ def parser() -> list:
 
         for person, name in enumerate(names):
             date = '2021-02-10'
-            surname, name = name.split()
+            name = name.split()
+
+            if len(name) == 1:
+                print(f'{datetime.now()} - parsers.schedule_parser.parser - name is {name} and it\'s wrong')
+                continue
+
+            surname, name = name[0], name[1]
             tg_username = tg_usernames[person]
 
             # filling the evnts
@@ -213,6 +223,7 @@ def parser() -> list:
                 )
 
                 evnts.append(event)
+
     except Exception as e:
         print(f'{datetime.now(timezone(timedelta(hours=3.0)))} - parsers.schedule_parser.parser - {e}')
 
