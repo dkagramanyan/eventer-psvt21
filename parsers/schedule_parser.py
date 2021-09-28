@@ -8,7 +8,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 import logging
-from parsers.configParser import ggl_token_file_name, credentials_file_name, spreadsheet_id, ranges
+from parsers.configParser import ggl_token_file_name, credentials_file_name, spreadsheet_id, number_orginizers, ranges
 import os
 from datetime import datetime, timezone, timedelta
 
@@ -16,18 +16,17 @@ from datetime import datetime, timezone, timedelta
 logging.basicConfig(
     filename='parser.log',
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    level=logging.WARNING
 )
 logger = logging.getLogger(__name__)
 
 
 def get_creds() -> Credentials:
-    """The function of creating credentials in order to connect to Google Drive files.
+    """The function to create credentials in order to connect to Google Drive files.
 
     :return: credentials
     :rtype: Credentials
     """
-
     SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly', 'https://www.googleapis.com/auth/drive']
 
     # try to read the credentials from the token file
@@ -51,7 +50,7 @@ def get_creds() -> Credentials:
 
 
 def get_row_data(spreadsheet_id: str, ranges: str) -> list:
-    """The function of getting an unformatted, full information rows from a spreadsheet by table id and read ranges.
+    """The function to get unformatted, full information rows from a spreadsheet by table id and read ranges.
 
     :param spreadsheet_id: spreadsheet id
     :type spreadsheet_id: str
@@ -62,30 +61,22 @@ def get_row_data(spreadsheet_id: str, ranges: str) -> list:
     :return: data rows with unformatted full information from a spreadsheet
     :rtype: list[...]
     """
-
-    rowData = []
-
     credentials = get_creds()
 
-    try:
-        service = build('sheets', 'v4', credentials=credentials)
+    service = build('sheets', 'v4', credentials=credentials)
 
-        request = service.spreadsheets().get(
-            spreadsheetId=spreadsheet_id,
-            ranges=ranges,
-            includeGridData=True
-        )
-        response = request.execute()
-        rowData = response['sheets'][0]['data'][0]['rowData']
+    request = service.spreadsheets().get(
+        spreadsheetId=spreadsheet_id,
+        ranges=ranges,
+        includeGridData=True
+    )
+    response = request.execute()
 
-    except Exception as e:
-        print(f'{datetime.now(timezone(timedelta(hours=3.0)))} - parsers.schedule_parser.get_row_data - {e}')
-
-    return rowData
+    return response['sheets'][0]['data'][0]['rowData']
 
 
 def get_table(spreadsheet: str, ranges: str) -> list:
-    """The function of getting data from a spreadsheet in a readable, unformatted form.
+    """The function to get data from a spreadsheet in a readable, unformatted form.
 
     :param spreadsheet: spreadsheet id
     :type spreadsheet: str
@@ -93,7 +84,6 @@ def get_table(spreadsheet: str, ranges: str) -> list:
     :return: list of columns with formatted values or None
     :rtype: list[[str | None, ...], ...]
     """
-
     table = []
 
     row_data = get_row_data(
@@ -101,7 +91,7 @@ def get_table(spreadsheet: str, ranges: str) -> list:
         ranges=ranges
     )
 
-    for row in row_data:
+    for row in row_data[:number_orginizers + 1]:
         try:
             # filling the table
             for i, value in enumerate(row['values']):
@@ -111,19 +101,13 @@ def get_table(spreadsheet: str, ranges: str) -> list:
                 if value and 'formattedValue' in value.keys():
                     formatted_value = value['formattedValue']
                 else:
-                    if i == 0:
-                        continue
-
-                    else:
-                        formatted_value = 'Отдых'
+                    formatted_value = None
 
                 table[i].append(formatted_value)
 
         except Exception as e:
             with open('../parsers/parser.log', 'a') as f:
-                print(f'{datetime.now(timezone(timedelta(hours=3.0)))} - parsers.schedule_parser.get_table - {e}',
-                      file=f)
-            print(f'{datetime.now(timezone(timedelta(hours=3.0)))} - parsers.schedule_parser.get_table - {e}')
+                print(f'{datetime.now(timezone(timedelta(hours=3.0)))} - parsers:schedule_parser - {e}', file=f)
 
     return table
 
@@ -135,7 +119,7 @@ class Event:
     surname - the person's surname
     user_name - the person's telegram tag
     chat_id - the person's telegram chat id
-    action - place or action that the person should do
+    event_name - place or action that the person should do
     start - start time of the event
     end - end time of the event
 
@@ -145,7 +129,7 @@ class Event:
                  name='name',
                  surname='surname',
                  user_name='user_name',
-                 action='action',
+                 event_name='event_name',
                  chat_id=0,
                  start=datetime.strptime('0:00', '%H:%M'),
                  end=datetime.strptime('0:00', '%H:%M')
@@ -154,77 +138,66 @@ class Event:
         self.surname = surname
         self.user_name = user_name
         self.chat_id = chat_id
-        self.action = action
+        self.event_name = event_name
         self.start = start
         self.end = end
 
     def __repr__(self):
-        return f'<Event(name="{self.name}", surname="{self.surname}", user_name="{self.user_name}", chat_id="{self.chat_id}", start={self.start}", end="{self.end}", action="{self.action}")>'
+        return f'<Event(name="{self.name}", surname="{self.surname}", user_name="{self.user_name}", chat_id="{self.chat_id}", start={self.start}", end="{self.end}", event_name="{self.event_name}")>'
 
     def __eq__(self, other):
         try:
             eq_name = self.name == other.name
             eq_surname = self.surname == other.surname
-            eq_action = self.action == other.action
+            eq_event_name = self.event_name == other.event_name
             eq_start = self.start == other.start
             eq_end = self.end == other.end
-            return eq_name and eq_surname and eq_action and eq_start and eq_end
+            return eq_name and eq_surname and eq_event_name and eq_start and eq_end
 
         except Exception as e:
-            print(f'{datetime.now(timezone(timedelta(hours=3.0)))} - parsers.schedule_parser.Event - {e}')
+            return e
 
 
 def parser() -> list:
-    """The function of creating a list of events from the parsed table.
+    """The function to create a set of events from the parsed table.
 
-    :return: list of the Event objects
-    :rtype: list[Event, ...]
+    :return: set of the Event objects
+    :rtype: set[Event, ...]
     """
+    table = get_table(spreadsheet_id, ranges)
 
     evnts = []
 
-    try:
-        table = get_table(spreadsheet_id, ranges)
+    names = table[0][1:]
+    tg_usernames = table[1][1:]
+    events = [table[i][1:] for i in range(6, 69)]
+    timings = [table[i][0] for i in range(6, 69)] + ['00:00']
 
-        names = table[0][1:]
-        tg_usernames = table[1][1:]
-        events = [table[i][1:] for i in range(6, 69)]
-        timings = [table[i][0] for i in range(6, 69)] + ['00:00']
+    for person, name in enumerate(names):
+        date = '2021-02-10'
+        surname, name = name.split()
+        tg_username = tg_usernames[person]
 
-        for person, name in enumerate(names):
-            date = '2021-02-10'
-            name = name.split()
+        # filling the evnts
+        for number, event_name in enumerate(events):
 
-            if len(name) == 1:
-                print(f'{datetime.now()} - parsers.schedule_parser.parser - name is {name} and it\'s wrong')
-                continue
+            if timings[number] == '0:00':
+                date = datetime.strptime(date, '%Y-%m-%d')
+                date += timedelta(days=1)
+                date = date.strftime('%Y-%m-%d')
 
-            surname, name = name[0], name[1]
-            tg_username = tg_usernames[person]
+            time_start = datetime.strptime(date + ' ' + timings[number], '%Y-%m-%d %H:%M')
+            time_end = datetime.strptime(date + ' ' + timings[number + 1], '%Y-%m-%d %H:%M')
 
-            # filling the evnts
-            for number, action in enumerate(events):
+            event = Event(
+                name=name,
+                surname=surname,
+                user_name=tg_username,
+                event_name=event_name[person],
+                start=time_start,
+                end=time_end
+            )
 
-                if timings[number] == '0:00':
-                    date = datetime.strptime(date, '%Y-%m-%d')
-                    date += timedelta(days=1)
-                    date = date.strftime('%Y-%m-%d')
-
-                time_start = datetime.strptime(date + ' ' + timings[number], '%Y-%m-%d %H:%M')
-                time_end = datetime.strptime(date + ' ' + timings[number + 1], '%Y-%m-%d %H:%M')
-
-                event = Event(
-                    name=name,
-                    surname=surname,
-                    user_name=tg_username,
-                    action=action[person],
-                    start=time_start,
-                    end=time_end
-                )
-
-                evnts.append(event)
-
-    except Exception as e:
-        print(f'{datetime.now(timezone(timedelta(hours=3.0)))} - parsers.schedule_parser.parser - {e}')
+            evnts.append(event)
 
     return evnts
