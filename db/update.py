@@ -29,7 +29,7 @@ def database(bot: TeleBot) -> None:
     """
 
     while True:
-        print(f'INFO: {datetime.now()} - db.update.database - db is updating')
+        # print(f'INFO: {datetime.now()} - db.update.database - db is updating')
 
         try:
             new_events = get.events_to_db(parser())
@@ -45,8 +45,8 @@ def database(bot: TeleBot) -> None:
             if new_events:
                 print(f'INFO: {datetime.now()} - db.update.database - db was update')
 
-            else:
-                print(f'INFO: {datetime.now()} - db.update.database - completion db update')
+            # else:
+            # print(f'INFO: {datetime.now()} - db.update.database - completion db update')
 
             time.sleep(60)
 
