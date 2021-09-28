@@ -7,6 +7,15 @@ from parsers.schedule_parser import parser
 import time
 from telebot import TeleBot
 from datetime import datetime
+import logging
+
+# Connect logging
+logging.basicConfig(
+    filename='parser.log',
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
 
 
 def database(bot: TeleBot) -> None:
@@ -32,7 +41,7 @@ def database(bot: TeleBot) -> None:
                     )
                     time.sleep(0.2)
 
-            time.sleep(5)
+            time.sleep(60)
 
         except Exception as e:
             print(f'{datetime.now()} - db.update.database - {e}')

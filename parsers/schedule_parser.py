@@ -16,7 +16,7 @@ from datetime import datetime, timezone, timedelta
 logging.basicConfig(
     filename='parser.log',
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.WARNING
+    level=logging.INFO
 )
 logger = logging.getLogger(__name__)
 

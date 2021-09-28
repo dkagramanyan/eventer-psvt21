@@ -5,6 +5,15 @@ from db.create import engine, PersonDB, EventDB
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy import asc
 from parsers.schedule_parser import Event
+import logging
+
+# Connect logging
+logging.basicConfig(
+    filename='parser.log',
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
 
 
 def session() -> Session:
@@ -75,6 +84,9 @@ def events_from_db(first_name='', last_name='', all=False) -> list:
 
         else:  # get by name and surname
             persondb = ssn.query(PersonDB).filter_by(last_name=last_name, first_name=first_name).first()
+
+        if not persondb:
+            return [None]
 
         events = [
             Event(

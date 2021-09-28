@@ -7,6 +7,16 @@ from telebot import types
 from db import get, update
 from datetime import datetime
 from threading import Thread
+import logging
+
+# Connect logging
+logging.basicConfig(
+    filename='parser.log',
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
+
 
 bot = telebot.TeleBot(token)  # connection to the tg bot
 logged_users = []  # list of users who wrote to the bot and is the organizer
@@ -58,13 +68,13 @@ def start(message: types.Message) -> None:
             text='Авторизация прошла успешно.\n'
                  'Чтобы вывести доступные команды, напиши /help')
 
-    except Exception as e:  # the first exception
+    except Exception as e1:  # the first exception
         try:
             bot.send_message(message.chat.id, 'Что-то пошло не так, напиши отвечающим за бота или руководству')
-        except Exception as e:  # the second exception
-            print(f'{datetime.now()} - bot.main.start.exception2 - {e}')
+        except Exception as e2:  # the second exception
+            print(f'{datetime.now()} - bot.main.start.exception2 - {e2}')
 
-        print(f'{datetime.now()} - bot.main.start.exception1 - {e}')
+        print(f'{datetime.now()} - bot.main.start.exception1 - {e1}')
 
 
 @bot.message_handler(commands=['help'])
@@ -144,21 +154,6 @@ def handler(message: types.Message) -> None:
         help_command(message=message)
 
 
-def main() -> None:
-    """The main function.
-    Launches bot and parsing.
-
-    :return: nothing
-    :rtype: None
-    """
-
-    bot_thread = Thread(target=bot.polling)
-    bot_thread.start()
-
-    parser = Thread(target=update.database, args=(bot,))
-    parser.start()
-
-
 def invite_write_name(message: types.Message) -> None:
     """The function of inviting the user to write his name.
     The next step is to invite to write his surname.
@@ -221,6 +216,13 @@ def send_schedule(message: types.Message, first_name: str) -> None:
         rows = []
 
         if events:  # create rows of events by list of events
+            if not events[0]:
+                bot.send_message(
+                    chat_id=message.chat.id,
+                    text='Пользователь не найден'
+                )
+                return
+
             current_action = events[0].action
             current_start = events[0].start
             current_end = events[0].end
@@ -262,6 +264,23 @@ def send_schedule(message: types.Message, first_name: str) -> None:
 
     except Exception as e:
         print(f'{datetime.now()} - bot.main.send_schedule - {e}')
+
+
+def main() -> None:
+    """The main function.
+    Launches bot and parsing.
+
+    :return: nothing
+    :rtype: None
+    """
+
+    bot_thread = Thread(target=bot.polling)
+    bot_thread.start()
+    print(f'{datetime.now()} - bot.main - bot launched successfully')
+
+    parser = Thread(target=update.database, args=(bot,))
+    parser.start()
+    print(f'{datetime.now()} - bot.main - parser launched successfully')
 
 
 main()

@@ -5,6 +5,15 @@ from db.configDB import connect_path
 from sqlalchemy import *
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime, timezone, timedelta
+import logging
+
+# Connect logging
+logging.basicConfig(
+    filename='parser.log',
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
 
 try:
     engine = create_engine(connect_path)
