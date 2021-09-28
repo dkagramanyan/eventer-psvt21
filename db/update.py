@@ -32,7 +32,7 @@ def database(bot: TeleBot) -> None:
                     )
                     time.sleep(0.2)
 
-            time.sleep(30)
+            time.sleep(5)
 
         except Exception as e:
             print(f'{datetime.now()} - db.update.database - {e}')

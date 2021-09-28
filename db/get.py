@@ -179,7 +179,7 @@ def events_to_db(new_events: list) -> dict:
                 if person_tg_chat_id not in messages.keys():
                     messages[person_tg_chat_id] = []
                 messages[person_tg_chat_id].append(
-                    f'{eventdb.start.strftime("%H:%M")} - {eventdb.end.strftime("%H:%M")} {eventdb.action}'
+                    f'{eventdb.start.strftime("%H:%M")} - {eventdb.end.strftime("%H:%M")} - {eventdb.action}'
                 )
 
     ssn.commit()

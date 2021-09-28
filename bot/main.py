@@ -221,9 +221,22 @@ def send_schedule(message: types.Message, first_name: str) -> None:
         rows = []
 
         if events:  # create rows of events by list of events
-            for event in events:
-                if event.start < datetime.now():
-                    rows.append(f'{event.start.strftime("%H:%M")} - {event.end.strftime("%H:%M")} {event.action}')
+            current_action = events[0].action
+            current_start = events[0].start
+            current_end = events[0].end
+
+            for event in events[1:]:
+                if current_action == event.action:
+                    current_end = event.end
+
+                else:
+                    rows.append(
+                        f'{current_start.strftime("%H:%M")} - {current_end.strftime("%H:%M")} - {current_action}')
+                    current_action = event.action
+                    current_start = event.start
+                    current_end = event.end
+
+            rows.append(f'{current_start.strftime("%H:%M")} - ... - {current_action}')
 
             message_text = '\n'.join(rows)
 
