@@ -20,7 +20,10 @@ class User:
 
     """
 
-    def __init__(self, chat_id=0, username=''):
+    def __init__(self,
+                 chat_id=0,
+                 username=''
+                 ):
         self.chat_id = chat_id
         self.username = username
 
