@@ -111,7 +111,7 @@ def get_table(spreadsheet: str, ranges: str) -> list:
                 if value and 'formattedValue' in value.keys():
                     formatted_value = value['formattedValue']
                 else:
-                    formatted_value = None
+                    formatted_value = 'Отдых'
 
                 table[i].append(formatted_value)
 
