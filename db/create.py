@@ -5,12 +5,30 @@ from db.configDB import connect_path
 from sqlalchemy import *
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime, timezone, timedelta
+import logging
+
+# Connect logging
+logging.basicConfig(
+    filename='parser.log',
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
 
 try:
     engine = create_engine(connect_path)
     db = declarative_base()
 
     class PersonDB(db):
+        """The object is a cell in the people table in the db.
+
+        first_name - user's name
+        last_name - user's surname
+        tg_chat_id - user's tg chat id
+        tg_username - user's tg tag
+
+        """
+
         __tablename__ = 'people'
 
         id = Column(Integer, primary_key=True)
@@ -19,7 +37,12 @@ try:
         tg_chat_id = Column(Integer)
         tg_username = Column(String, unique=True)
 
-        def __init__(self, first_name='first_name', last_name='last_name', tg_chat_id=0, tg_username='tg_username'):
+        def __init__(self,
+                     first_name='first_name',
+                     last_name='last_name',
+                     tg_chat_id=0,
+                     tg_username='tg_username'
+                     ):
             self.first_name = first_name
             self.last_name = last_name
             self.tg_chat_id = tg_chat_id
@@ -30,26 +53,38 @@ try:
 
 
     class EventDB(db):
+        """The object is a cell in the schedule table in the db.
+
+        person_id - person's id in the people table in the db who should do the event
+        action - action to be taken by a person
+        start - start date and time of the event
+        end - end date and time of the event
+
+        """
+
         __tablename__ = 'schedule'
 
         id = Column(Integer, primary_key=True)
         person_id = Column(Integer, ForeignKey(PersonDB.id))
-        event_name = Column(String)
+        action = Column(String)
         start = Column(DateTime)
         end = Column(DateTime)
 
-        def __init__(self, person_id=0, event_name='event_name', start=datetime.strptime('0:00', '%H:%M').time(),
-                     end=datetime.strptime('0:00', '%H:%M').time()):
+        def __init__(self,
+                     person_id=0,
+                     action='None',
+                     start=datetime.strptime('0:00', '%H:%M').time(),
+                     end=datetime.strptime('0:00', '%H:%M').time()
+                     ):
             self.person_id = person_id
-            self.event_name = event_name
+            self.action = action
             self.start = start
             self.end = end
 
         def __repr__(self):
-            return f'<Event(person_id="{self.person_id}", event_name="{self.event_name}", start="{self.start}", end="{self.end}")>'
-
+            return f'<Event(person_id="{self.person_id}", action="{self.action}", start="{self.start}", end="{self.end}")>'
 
     db.metadata.create_all(engine)
 
 except Exception as e:
-    print(f'{datetime.now(timezone(timedelta(hours=3.0)))} - db.get.database() - "{e}"')
+    print(f'{datetime.now(timezone(timedelta(hours=3.0)))} - db.create - "{e}"')
