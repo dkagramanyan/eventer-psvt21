@@ -8,7 +8,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 import logging
-from parsers.configParser import ggl_token_file_name, credentials_file_name, spreadsheet_id, ranges
+from configParser import ggl_token_file_name, credentials_file_name, spreadsheet_id, ranges
 import os
 from datetime import datetime, timezone, timedelta
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from db.configDB import connect_path
+from configDB import connect_path
 from sqlalchemy import *
 from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime, timezone, timedelta
@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 try:
     engine = create_engine(connect_path)
     db = declarative_base()
+
 
     class PersonDB(db):
         """The object is a cell in the people table in the db.
@@ -83,6 +84,7 @@ try:
 
         def __repr__(self):
             return f'<Event(person_id="{self.person_id}", action="{self.action}", start="{self.start}", end="{self.end}")>'
+
 
     db.metadata.create_all(engine)
 

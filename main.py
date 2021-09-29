@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from bot.configBot import token
+from configBot import token
 import telebot
 from telebot import types
-from db import get, update
+import get, update
 from datetime import datetime
 from threading import Thread
 import logging
+from create import PersonDB
 
 # Connect logging
 logging.basicConfig(
@@ -16,7 +17,6 @@ logging.basicConfig(
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
-
 
 bot = telebot.TeleBot(token)  # connection to the tg bot
 logged_users = []  # list of users who wrote to the bot and is the organizer
@@ -91,13 +91,25 @@ def help_command(message: types.Message) -> None:
     try:
         bot.send_message(
             chat_id=message.chat.id,
-            text='/start - авторизироваться\n'
-                 '/help - вывести имеющиеся команды\n'
-                 '/schedule - запросить расписание'
+            text='/myschedule - мое расписание\n'
+                 '/start - авторизоваться\n'
+                 '/schedule - чужое расписание\n'
+                 '/help - имеющиеся команды'
         )
 
     except Exception as e:
         print(f'{datetime.now()} - bot.main.help - {e}')
+
+
+@bot.message_handler(commands=['myschedule'])
+def my_schedule(message: types.Message) -> None:
+    try:
+        ssn = get.session()
+        name, surname = ssn.query(PersonDB.first_name, PersonDB.last_name).filter_by(
+            tg_username=message.chat.username).first()
+        send_schedule(message=message, my=True, first_name=name, last_name=surname)
+    except Exception as e:
+        print(f'{datetime.now()} - bot.main.my_chedule - {e}')
 
 
 @bot.message_handler(commands=['schedule'])
@@ -195,7 +207,7 @@ def invite_write_surname(message: types.Message) -> None:
         print(f'{datetime.now()} - bot.main.invite_write_surname - {e}')
 
 
-def send_schedule(message: types.Message, first_name: str) -> None:
+def send_schedule(message: types.Message, first_name: str, my=False, last_name='') -> None:
     """The function of saving the received data to the database.
 
     :param message: the received message from telegram
@@ -209,7 +221,8 @@ def send_schedule(message: types.Message, first_name: str) -> None:
     """
 
     try:
-        last_name = message.text
+        if not my:
+            last_name = message.text
 
         events = get.events_from_db(first_name, last_name)
 

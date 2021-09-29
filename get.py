@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from db.create import engine, PersonDB, EventDB
+from create import engine, PersonDB, EventDB
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy import asc
-from parsers.schedule_parser import Event
+from schedule_parser import Event
 import logging
 
 # Connect logging

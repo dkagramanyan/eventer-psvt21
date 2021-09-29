@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-from db import get
-from db.create import PersonDB
-from parsers.schedule_parser import parser
+import get
+from create import PersonDB
+from schedule_parser import parser
 import time
 from telebot import TeleBot
 from datetime import datetime
