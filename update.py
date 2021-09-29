@@ -11,7 +11,6 @@ import logging
 
 # Connect logging
 logging.basicConfig(
-    filename='parser.log',
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
@@ -70,6 +69,9 @@ def tg_chat_id(username: str, chat_id: int) -> None:
 
     session = get.session()
     persondb = session.query(PersonDB).filter_by(tg_username=username).first()
+
+    if not persondb:
+        return
 
     persondb.tg_chat_id = chat_id
 

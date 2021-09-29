@@ -12,7 +12,6 @@ from create import PersonDB
 
 # Connect logging
 logging.basicConfig(
-    filename='parser.log',
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
@@ -179,7 +178,7 @@ def invite_write_name(message: types.Message) -> None:
     """
 
     try:
-        first_name = bot.send_message(message.chat.id, 'Напиши свое имя')
+        first_name = bot.send_message(message.chat.id, 'Напиши имя')
         bot.register_next_step_handler(first_name, invite_write_surname)
 
     except Exception as e:
@@ -200,7 +199,7 @@ def invite_write_surname(message: types.Message) -> None:
     try:
         first_name = message.text  # user's name or 'По фамилии'
 
-        last_name = bot.send_message(message.chat.id, 'Напиши свою фамилию')
+        last_name = bot.send_message(message.chat.id, 'Напиши фамилию')
         bot.register_next_step_handler(last_name, send_schedule, first_name)
 
     except Exception as e:

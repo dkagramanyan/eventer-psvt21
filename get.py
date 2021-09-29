@@ -9,7 +9,6 @@ import logging
 
 # Connect logging
 logging.basicConfig(
-    filename='parser.log',
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
