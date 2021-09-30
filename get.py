@@ -86,7 +86,10 @@ def events_from_db(first_name='', last_name='', all=False) -> list:
         # persondb = ssn.query(PersonDB).filter_by(last_name=last_name).first()
 
         else:  # get by name and surname
-            persondb = ssn.query(PersonDB).filter_by(last_name=last_name, first_name=first_name).first()
+            persondb = ssn.execute(
+                "select * from people p where similarity(p.last_name,:last_name_var)>0.5 and similarity(p.first_name,:first_name_var)>0.5 limit 1 ",
+                {'last_name_var': last_name, 'first_name_var': first_name})
+            # persondb = ssn.query(PersonDB).filter_by(last_name=last_name, first_name=first_name).first()
 
         if not persondb:
             return [None]
