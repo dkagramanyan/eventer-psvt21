@@ -140,7 +140,7 @@ def events_to_db(new_events: list) -> dict:
         key - chat id
         value - list of the changes
     Example of the element in the list:
-        '09:00 - 09:00 Action'
+        '09:00 - 09:00 - Action'
 
     :param new_events: list of the Event objects
     :type new_events: list[Event, ...]
@@ -178,11 +178,11 @@ def events_to_db(new_events: list) -> dict:
         elif event.action != people[event.user_name]['current_action'] and abs(
                 (event.start - datetime.now()).days * 24 * 60 + (event.start - datetime.now()).seconds / 60 - 60) < 10:
 
-            person = ssn.query(PersonDB).filter_by(tg_username=event.user_name).first()
-            if person.tg_chat_id not in messages.keys():
-                messages[person.tg_chat_id] = []
-            messages[person.tg_chat_id].append(f'Смена деятельности:\n'
-                                               f'С {event.start} - {event.action}')
+            persondb = ssn.query(PersonDB).filter_by(tg_username=event.user_name).first()
+            if persondb.tg_chat_id not in messages.keys():
+                messages[persondb.tg_chat_id] = []
+            messages[persondb.tg_chat_id].append(f'Смена деятельности:\n'
+                                                 f'С {event.start} - {event.action}')
 
             person.current_action = event.action
 
@@ -220,7 +220,29 @@ def events_to_db(new_events: list) -> dict:
 
 
 def person(first_name='', last_name='', chat_id=0, username='', id=0) -> dict or None:
+    """The function of getting user's name, surname and tg chat id from the db.
+
+    :param first_name: the user's name
+    :type first_name: str
+
+    :param last_name: the user's surname
+    :type last_name: str
+
+    :param chat_id: the user's tg chat id
+    :type chat_id: int
+
+    :param username: the user's tg username
+    :type username: str
+
+    :param id: the user's id from the people table
+    :type id: int
+
+    :return: the user's characteristics or None
+    :rtype: dict | None
+    """
+
     ssn = session()
+
     if first_name and last_name:
         persondb = ssn.query(PersonDB).filter_by(first_name=first_name, last_name=last_name).first()
     elif username:

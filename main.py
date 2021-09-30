@@ -110,6 +110,7 @@ def help_command(message: types.Message) -> None:
 
         else:
             text = 'К сожалению, ты не организатор данного мероприятия.\nПопробуй вновь написать команду /start.\nЕсли произошла ошибка, напиши об этом руководству.'
+
         bot.send_message(
             chat_id=message.chat.id,
             text=text
@@ -121,6 +122,14 @@ def help_command(message: types.Message) -> None:
 
 @bot.message_handler(commands=['myschedule'])
 def my_schedule(message: types.Message) -> None:
+    """The function is the handler of the my schedule command.
+
+    :param message: the received message from tg
+    :type message: types.Message
+
+    :return: nothing
+    :rtype: None
+    """
     try:
         if message.chat.username in logged_users:
             person = get.person(username=message.chat.username)
@@ -135,7 +144,7 @@ def my_schedule(message: types.Message) -> None:
             )
 
     except Exception as e:
-        print(f'{datetime.now()} - bot.main.my_chedule - {e}')
+        print(f'{datetime.now()} - bot.main.my_schedule - {e}')
 
 
 @bot.message_handler(commands=['schedule'])
@@ -252,13 +261,19 @@ def invite_write_surname(message: types.Message) -> None:
 
 
 def send_schedule(message: types.Message, first_name: str, my=False, last_name='') -> None:
-    """The function of saving the received data to the database.
+    """The function of sending the schedule from the db.
 
     :param message: the received message from telegram
     :type message: types.Message
 
     :param first_name: the received user's name
     :type first_name: str
+
+    :param my: flag showing whose schedule the user requested
+    :type my: bool
+
+    :param last_name: the received user's surname
+    :type last_name: str
 
     :return: nothing
     :rtype: None

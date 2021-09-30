@@ -35,14 +35,17 @@ def database(bot: TeleBot) -> None:
 
             for chat_id in new_events.keys():
                 if chat_id:
+
                     messages = new_events[chat_id]
                     message = ''
+
                     for new_event in messages:
                         if 'Смена деятельности: ' in new_event:
                             bot.send_message(
                                 chat_id=chat_id,
                                 text=new_event
                             )
+
                         else:
                             message += new_event + '\n'
 
@@ -76,8 +79,8 @@ def tg_chat_id(username: str, chat_id: int) -> int:
     :param chat_id: the user's tg chat id
     :type chat_id: int
 
-    :return: nothing
-    :rtype: None
+    :return: the user's tg chat id or 0
+    :rtype: int
     """
 
     session = get.session()

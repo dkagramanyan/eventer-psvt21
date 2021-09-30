@@ -83,11 +83,14 @@ def get_row_data(spreadsheet_id: str, ranges: str) -> list:
     return rowData
 
 
-def get_table(spreadsheet: str, ranges: str) -> list:
+def get_table(spreadsheet_id: str, ranges: str) -> list:
     """The function of getting data from a spreadsheet in a readable, unformatted form.
 
-    :param spreadsheet: spreadsheet id
-    :type spreadsheet: str
+    :param spreadsheet_id: spreadsheet id
+    :type spreadsheet_id: str
+
+    :param ranges: range of columns as 'A:Z'
+    :type ranges: str
 
     :return: list of columns with formatted values or None
     :rtype: list[[str | None, ...], ...]
@@ -96,7 +99,7 @@ def get_table(spreadsheet: str, ranges: str) -> list:
     table = []
 
     row_data = get_row_data(
-        spreadsheet_id=spreadsheet,
+        spreadsheet_id=spreadsheet_id,
         ranges=ranges
     )
 
