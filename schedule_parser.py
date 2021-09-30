@@ -188,7 +188,7 @@ def parser() -> list:
         timings = [table[i][0] for i in range(6, 69)] + ['00:00']
 
         for person, name in enumerate(names):
-            date = '2021-09-30'
+            date = '2021-10-02'
             name = name.split()
 
             if len(name) == 1:
