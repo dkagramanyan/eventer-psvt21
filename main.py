@@ -18,7 +18,10 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 bot = telebot.TeleBot(token)  # connection to the tg bot
-logged_users = []  # list of users who wrote to the bot and is the organizer
+
+logged_users = set(
+    persondb.tg_username for persondb in get.session().query(PersonDB).filter(PersonDB.tg_chat_id != 0).all()
+)  # list of users who wrote to the bot and is the organizer
 
 
 class User:
@@ -39,6 +42,9 @@ class User:
     def __repr__(self):
         return f'<User(chat_id="{self.chat_id}", username="{self.username}")>'
 
+    def __eq__(self, other):
+        return type(other) == User and self.chat_id == other.chat_id and self.username == other.username
+
 
 @bot.message_handler(commands=['start'])
 def start(message: types.Message) -> None:
@@ -53,23 +59,26 @@ def start(message: types.Message) -> None:
     """
 
     try:
-        user = User(
-            chat_id=message.chat.id,
-            username=message.chat.username
-        )
+        if message.chat.username not in logged_users:
+            if update.tg_chat_id(username=message.chat.username, chat_id=message.chat.id):
+                logged_users.add(message.chat.username)
 
-        persondb = update.tg_chat_id(username=user.username, chat_id=user.chat_id)
+                bot.send_message(
+                    chat_id=message.chat.id,
+                    text='Авторизация прошла успешно.\n'
+                         'Чтобы вывести доступные команды, напиши /help'
+                )
 
-        if persondb:
-            logged_users.append(user)
-
+            else:
+                bot.send_message(message.chat.id, 'К сожалению, ты не организатор данного мероприятия.\n'
+                                                  'Попробуй вновь написать команду /start.\n'
+                                                  'Если произошла ошибка, напиши об этом руководству.')
+        else:
             bot.send_message(
                 chat_id=message.chat.id,
-                text='Авторизация прошла успешно.\n'
-                     'Чтобы вывести доступные команды, напиши /help')
-        else:
-            bot.send_message(message.chat.id, 'К сожалению, ты не организатор данного мероприятия.\n'
-                                              'Если произошла ошибка, напиши об этом руководству.')
+                text='Авторизация была произведена.\n'
+                     'Чтобы вывести доступные команды, напиши /help'
+            )
 
     except Exception as e1:  # the first exception
         try:
@@ -92,12 +101,21 @@ def help_command(message: types.Message) -> None:
     """
 
     try:
+
+        if message.chat.username in logged_users:
+            text = '/myschedule - мое расписание\n' \
+                   '/start - авторизоваться\n' \
+                   '/schedule - чужое расписание\n' \
+                   '/help - имеющиеся команды'
+
+        else:
+            text = 'К сожалению, ты не организатор данного мероприятия.\n' \
+                   'Попробуй вновь написать команду /start.\n' \
+                   'Если произошла ошибка, напиши об этом руководству.' \
+ \
         bot.send_message(
             chat_id=message.chat.id,
-            text='/myschedule - мое расписание\n'
-                 '/start - авторизоваться\n'
-                 '/schedule - чужое расписание\n'
-                 '/help - имеющиеся команды'
+            text=text
         )
 
     except Exception as e:
@@ -107,10 +125,18 @@ def help_command(message: types.Message) -> None:
 @bot.message_handler(commands=['myschedule'])
 def my_schedule(message: types.Message) -> None:
     try:
-        ssn = get.session()
-        name, surname = ssn.query(PersonDB.first_name, PersonDB.last_name).filter_by(
-            tg_username=message.chat.username).first()
-        send_schedule(message=message, my=True, first_name=name, last_name=surname)
+        if message.chat.username in logged_users:
+            person = get.person(username=message.chat.username)
+            send_schedule(message=message, my=True, first_name=person['first_name'], last_name=person['last_name'])
+
+        else:
+            bot.send_message(
+                chat_id=message.chat.id,
+                text='К сожалению, ты не организатор данного мероприятия.\n'
+                     'Попробуй вновь написать команду /start.\n'
+                     'Если произошла ошибка, напиши об этом руководству.'
+            )
+
     except Exception as e:
         print(f'{datetime.now()} - bot.main.my_chedule - {e}')
 
@@ -127,19 +153,28 @@ def choice_way_to_to_get_schedule(message: types.Message) -> None:
     """
 
     try:
-        buttons = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        if message.chat.username in logged_users:
+            buttons = types.ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
 
-        surname = types.KeyboardButton('По фамилии')
-        name_and_surname = types.KeyboardButton('По имени и фамилии')
+            surname = types.KeyboardButton('По фамилии')
+            name_and_surname = types.KeyboardButton('По имени и фамилии')
 
-        buttons.add(surname, name_and_surname)
+            buttons.add(surname, name_and_surname)
 
-        bot.send_message(
-            chat_id=message.chat.id,
-            text='По этой команде вы можете получить свое расписание!\n'
-                 'Поиск по фамилии или по имени и фамилии?',
-            reply_markup=buttons
-        )
+            bot.send_message(
+                chat_id=message.chat.id,
+                text='По этой команде вы можете получить расписание!\n'
+                     'Поиск по фамилии или по имени и фамилии?',
+                reply_markup=buttons
+            )
+
+        else:
+            bot.send_message(
+                chat_id=message.chat.id,
+                text='К сожалению, ты не организатор данного мероприятия.\n'
+                     'Попробуй вновь написать команду /start.\n'
+                     'Если произошла ошибка, напиши об этом руководству.'
+            )
 
     except Exception as e:
         print(f'{datetime.now()} - bot.main.schedule - {e}')
@@ -160,14 +195,23 @@ def handler(message: types.Message) -> None:
     :rtype: None
     """
 
-    if message.text == 'По фамилии':
-        invite_write_surname(message)
+    if message.chat.username in logged_users:
 
-    elif message.text == 'По имени и фамилии':
-        invite_write_name(message)
+        if message.text == 'По фамилии':
+            invite_write_surname(message)
 
+        elif message.text == 'По имени и фамилии':
+            invite_write_name(message)
+
+        else:
+            help_command(message=message)
     else:
-        help_command(message=message)
+        bot.send_message(
+            chat_id=message.chat.id,
+            text='К сожалению, ты не организатор данного мероприятия.\n'
+                 'Попробуй вновь написать команду /start.\n'
+                 'Если произошла ошибка, напиши об этом руководству.'
+        )
 
 
 def invite_write_name(message: types.Message) -> None:

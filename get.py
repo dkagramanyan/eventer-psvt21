@@ -217,3 +217,23 @@ def events_to_db(new_events: list) -> dict:
     ssn.commit()
 
     return messages
+
+
+def person(first_name='', last_name='', chat_id=0, username='', id=0) -> dict or None:
+    ssn = session()
+    if first_name and last_name:
+        persondb = ssn.query(PersonDB).filter_by(first_name=first_name, last_name=last_name).first()
+    elif username:
+        persondb = ssn.query(PersonDB).filter_by(tg_username=username).first()
+    elif id:
+        persondb = ssn.query(PersonDB).filter_by(id=id).first()
+    elif chat_id:
+        persondb = ssn.query(PersonDB).filter_by(tg_chat_id=chat_id).first()
+    else:
+        return None
+
+    return {
+        'first_name': persondb.first_name,
+        'last_name': persondb.last_name,
+        'tg_chat_id': persondb.tg_chat_id
+    }
