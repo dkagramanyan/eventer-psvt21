@@ -6,6 +6,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy import asc
 from schedule_parser import Event
 import logging
+from datetime import datetime
 
 # Connect logging
 logging.basicConfig(
@@ -153,7 +154,10 @@ def events_to_db(new_events: list) -> dict:
     ssn = session()
     db_events = events_from_db(all=True)
     people = {
-        persondb.tg_username: persondb.id for persondb in ssn.query(PersonDB)
+        persondb.tg_username: {
+            'id': persondb.id,
+            'current_action': persondb.current_action
+        } for persondb in ssn.query(PersonDB)
     }
 
     for event in new_events:
@@ -161,15 +165,31 @@ def events_to_db(new_events: list) -> dict:
             new_person = PersonDB(
                 first_name=event.name,
                 last_name=event.surname,
-                tg_username=event.user_name
+                tg_username=event.user_name,
+                current_action=event.action
             )
             ssn.add(new_person)
             ssn.commit()
-            people[f'{event.user_name}'] = new_person.id
+            people[f'{event.user_name}'] = {
+                'id': new_person.id,
+                'current_action': event.action
+            }
+
+        elif event.action != people[event.user_name]['current_action'] and abs(
+                ((event.start - datetime.now()).days * 24 * 60) + (
+                        (event.start - datetime.now()).seconds / 60 - 60)) < 10:
+            person = ssn.query(PersonDB).filter_by(
+                tg_username=event.user_name
+            ).first()
+            if person.tg_chat_id not in messages.keys():
+                messages.keys[person.tg_chat_id] = []
+            messages[person.tg_chat_id].append(f'Смена деятельности: {event.action}')
+            person.current_action = event.action
+            ssn.commit()
 
         if not db_events:  # if db is empty
             new_event_db = EventDB(
-                person_id=people[f'{event.user_name}'],
+                person_id=people[f'{event.user_name}']['id'],
                 action=event.action,
                 start=event.start,
                 end=event.end
@@ -178,7 +198,7 @@ def events_to_db(new_events: list) -> dict:
 
         else:  # update event from db
             eventdb = ssn.query(EventDB).filter_by(
-                person_id=people[event.user_name],
+                person_id=people[event.user_name]['id'],
                 start=event.start,
             ).first()
 

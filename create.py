@@ -36,20 +36,23 @@ try:
         last_name = Column(String)
         tg_chat_id = Column(Integer)
         tg_username = Column(String, unique=True)
+        current_action = Column(String)
 
         def __init__(self,
                      first_name='first_name',
                      last_name='last_name',
                      tg_chat_id=0,
-                     tg_username='tg_username'
+                     tg_username='tg_username',
+                     current_action='Сидит дома'
                      ):
             self.first_name = first_name
             self.last_name = last_name
             self.tg_chat_id = tg_chat_id
-            self.tg_username = tg_username
+            self.tg_username = tg_username,
+            self.current_action = current_action
 
         def __repr__(self):
-            return f'<Person(name="{self.first_name}", surname="{self.last_name}", tg_username="{self.tg_username}")>'
+            return f'<Person(name="{self.first_name}", surname="{self.last_name}", tg_username="{self.tg_username}", current_action="{self.current_action}")>'
 
 
     class EventDB(db):

@@ -28,17 +28,30 @@ def database(bot: TeleBot) -> None:
     """
 
     while True:
-        # print(f'INFO: {datetime.now()} - db.update.database - db is updating')
+        print(f'INFO: {datetime.now()} - db.update.database - db is updating')
 
         try:
             new_events = get.events_to_db(parser())
 
             for chat_id in new_events.keys():
+                print(chat_id, new_events[chat_id])
                 if chat_id:
+                    messages = new_events[chat_id]
+                    message = 'Расписание изменено:\n'
+                    for new_event in messages:
+                        if 'Смена деятельности' in new_event:
+                            bot.send_message(
+                                chat_id=chat_id,
+                                text=new_event
+                            )
+                        else:
+                            message += new_event + '\n'
+
                     bot.send_message(
                         chat_id=chat_id,
                         text='Расписание изменено:\n' + '\n'.join(new_events[chat_id])
                     )
+
                     time.sleep(0.2)
 
             if new_events:
