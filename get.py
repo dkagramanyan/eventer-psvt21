@@ -81,30 +81,42 @@ def events_from_db(first_name='', last_name='', all=False) -> list:
 
     if last_name != '':  # get events for one person only
         if first_name == 'По фамилии':  # get only by surname
-            persondb = ssn.execute("select * from people p where similarity(p.last_name,:last_name_var)>0.5 limit 1 ",
-                                   {'last_name_var': last_name})
+            row = ssn.execute(
+                "select * from people p where levenshtein( LOWER(p.last_name),'%s')<3 limit 1 " % (
+                    last_name.lower())).fetchall()
         # persondb = ssn.query(PersonDB).filter_by(last_name=last_name).first()
 
         else:  # get by name and surname
-            persondb = ssn.execute(
-                "select * from people p where similarity(p.last_name,:last_name_var)>0.5 and similarity(p.first_name,:first_name_var)>0.5 limit 1 ",
-                {'last_name_var': last_name, 'first_name_var': first_name})
+            row = ssn.execute(
+                "select * from people p where  levenshtein( LOWER(p.last_name),'%s')<3 and similarity( LOWER(p.first_name),%s)<3 limit 1 " %
+                (last_name.lower(), first_name.lower())).fetchall()
             # persondb = ssn.query(PersonDB).filter_by(last_name=last_name, first_name=first_name).first()
 
-        if not persondb:
+        if not row:
             return [None]
 
         events = [
             Event(
-                name=persondb.first_name,
-                surname=persondb.last_name,
-                user_name=persondb.tg_username,
+                name=row[0][1],
+                surname=row[0][2],
+                user_name=row[0][4],
                 action=eventdb.action,
-                chat_id=persondb.tg_chat_id,
+                chat_id=row[0][3],
                 start=eventdb.start,
                 end=eventdb.end
-            ) for eventdb in ssn.query(EventDB).filter_by(person_id=persondb.id).order_by(asc(EventDB.start))
+            ) for eventdb in ssn.query(EventDB).filter_by(person_id=row[0][0]).order_by(asc(EventDB.start))
         ]
+    #        events = [
+    #             Event(
+    #                 name=persondb.first_name,
+    #                 surname=persondb.last_name,
+    #                 user_name=persondb.tg_username,
+    #                 action=eventdb.action,
+    #                 chat_id=persondb.tg_chat_id,
+    #                 start=eventdb.start,
+    #                 end=eventdb.end
+    #             ) for eventdb in ssn.query(EventDB).filter_by(person_id=persondb.id).order_by(asc(EventDB.start))
+    #        ]
 
     elif all:  # get all people
 
