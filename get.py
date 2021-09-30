@@ -175,16 +175,17 @@ def events_to_db(new_events: list) -> dict:
                 'current_action': event.action
             }
 
-        elif event.action != people[event.user_name]['current_action'] and abs(
+        elif event.user_name == 'g_kar1na' and event.action != people[event.user_name]['current_action'] and abs(
                 ((event.start - datetime.now()).days * 24 * 60) + (
-                        (event.start - datetime.now()).seconds / 60 - 60)) < 10:
-            person = ssn.query(PersonDB).filter_by(
-                tg_username=event.user_name
-            ).first()
+                        (event.start - datetime.now()).seconds / 60)):  # 60 - 60
+
+            person = ssn.query(PersonDB).filter_by(tg_username=event.user_name).first()
             if person.tg_chat_id not in messages.keys():
-                messages.keys[person.tg_chat_id] = []
+                messages[person.tg_chat_id] = []
             messages[person.tg_chat_id].append(f'Смена деятельности: {event.action}')
+
             person.current_action = event.action
+
             ssn.commit()
 
         if not db_events:  # if db is empty
