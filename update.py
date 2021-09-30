@@ -66,7 +66,7 @@ def database(bot: TeleBot) -> None:
             print(f'{datetime.now()} - db.update.database - {e}')
 
 
-def tg_chat_id(username: str, chat_id: int) -> None:
+def tg_chat_id(username: str, chat_id: int) -> PersonDB:
     """The function of updating the person's tg chat in the db.
     The function is authorization.
 
@@ -84,8 +84,10 @@ def tg_chat_id(username: str, chat_id: int) -> None:
     persondb = session.query(PersonDB).filter_by(tg_username=username).first()
 
     if not persondb:
-        return
+        return persondb
 
     persondb.tg_chat_id = chat_id
 
     session.commit()
+
+    return persondb

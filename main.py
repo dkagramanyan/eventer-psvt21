@@ -58,14 +58,18 @@ def start(message: types.Message) -> None:
             username=message.chat.username
         )
 
-        update.tg_chat_id(username=user.username, chat_id=user.chat_id)
+        persondb = update.tg_chat_id(username=user.username, chat_id=user.chat_id)
 
-        logged_users.append(user)
+        if persondb:
+            logged_users.append(user)
 
-        bot.send_message(
-            chat_id=message.chat.id,
-            text='Авторизация прошла успешно.\n'
-                 'Чтобы вывести доступные команды, напиши /help')
+            bot.send_message(
+                chat_id=message.chat.id,
+                text='Авторизация прошла успешно.\n'
+                     'Чтобы вывести доступные команды, напиши /help')
+        else:
+            bot.send_message(message.chat.id, 'К сожалению, ты не организатор данного мероприятия.\n'
+                                              'Если произошла ошибка, напиши об этом руководству.')
 
     except Exception as e1:  # the first exception
         try:
