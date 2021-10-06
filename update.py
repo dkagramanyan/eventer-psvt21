@@ -40,7 +40,7 @@ def database(bot: TeleBot) -> None:
                     message = ''
 
                     for new_event in messages:
-                        if 'Смена деятельности: ' in new_event:
+                        if 'Смена деятельности:\n' in new_event:
                             bot.send_message(
                                 chat_id=chat_id,
                                 text=new_event

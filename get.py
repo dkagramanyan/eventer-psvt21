@@ -184,7 +184,7 @@ def events_to_db(new_events: list) -> dict:
             messages[persondb.tg_chat_id].append(f'Смена деятельности:\n'
                                                  f'С {event.start} - {event.action}')
 
-            person.current_action = event.action
+            persondb.current_action = event.action
 
             ssn.commit()
 
